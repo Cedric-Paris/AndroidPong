@@ -8,17 +8,17 @@ import android.content.res.Resources;
 public class Ball extends GameObject{
 
     //private Vector2 direction;
-    private float xVectorDirection = 1;
-    private float yVectorDirection = 1;
+    private float xVectorDirection = 5;
+    private float yVectorDirection = 5;
 
     public Ball(Resources resources, float posXLeft, float posYTop)
     {
-        super(resources, R.drawable.paddle_sprite, posXLeft, posYTop);
+        super(resources, R.drawable.ball, posXLeft, posYTop);
     }
 
     public Ball(Resources resources)
     {
-        super(resources, R.drawable.paddle_sprite, 0, 0);
+        super(resources, R.drawable.ball, 0, 0);
     }
 
     public void updateState(int widthDrawArea, int heightDrawArea)

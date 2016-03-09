@@ -20,7 +20,7 @@ import java.util.List;
 /**
  * Created by Cedric on 07/03/2016.
  */
-public class GameSurfaceView extends SurfaceView implements SensorEventListener {
+public class GameSurfaceView extends SurfaceView implements SensorEventListener, SurfaceHolder.Callback {
 
     private SurfaceHolder holder;
 
@@ -36,6 +36,7 @@ public class GameSurfaceView extends SurfaceView implements SensorEventListener 
     {
         super(context);
         holder = getHolder();
+        holder.addCallback(this);
         objectsOnScene = new ArrayList<GameObject>();
         paddle = new Paddle(resources);
         objectsOnScene.add(new Ball(resources));
@@ -45,7 +46,7 @@ public class GameSurfaceView extends SurfaceView implements SensorEventListener 
     {
         senSensorManager = (SensorManager) getContext().getSystemService(Context.SENSOR_SERVICE);
         senAccelerometer = senSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
-        senSensorManager.registerListener(this, senAccelerometer, SensorManager.SENSOR_DELAY_NORMAL);
+        senSensorManager.registerListener(this, senAccelerometer, SensorManager.SENSOR_DELAY_GAME);
 
     }
 
@@ -77,18 +78,19 @@ public class GameSurfaceView extends SurfaceView implements SensorEventListener 
             return;
         isUpdatingScene = true;
         Log.i("STARTQUITUE DE LA MORT", "EVENT");
-        Canvas canvas = holder.lockCanvas();
+        /*Canvas canvas = holder.lockCanvas();
         if(canvas == null) {
             isUpdatingScene = false;
             return;
         }
+        canvas.drawARGB(255,30,30,30);
         int canvasWidth = canvas.getWidth();
         int canvasHeight = canvas.getHeight();
-        holder.unlockCanvasAndPost(canvas);
+        holder.unlockCanvasAndPost(canvas);*/
 
-        paddle.updateState(canvasWidth, canvasHeight);
+        paddle.updateState(500, 800);
         for(GameObject g : objectsOnScene) {
-            g.updateState(canvasWidth, canvasHeight);
+            g.updateState(500, 800);
         }
         drawSurface();
 
@@ -98,5 +100,20 @@ public class GameSurfaceView extends SurfaceView implements SensorEventListener 
     @Override
     public void onAccuracyChanged(Sensor sensor, int accuracy)
     {
+    }
+
+    @Override
+    public void surfaceCreated(SurfaceHolder holder) {
+        Log.i("STARTQUITUE DE LA MORT", "Surface CREATED");
+    }
+
+    @Override
+    public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
+        Log.i("STARTQUITUE DE LA MORT", "Surface CHANGED");
+    }
+
+    @Override
+    public void surfaceDestroyed(SurfaceHolder holder) {
+        Log.i("STARTQUITUE DE LA MORT", "Surface DESTROYED");
     }
 }

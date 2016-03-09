@@ -19,7 +19,7 @@ public class Paddle extends GameObject{
 
     public void updateState(int widthDrawArea, int heightDrawArea)
     {
-        posXLeft+=1;
-        posYTop+=1;
+        //posXLeft+=1;
+        //posYTop+=1;
     }
 }
