@@ -20,13 +20,14 @@ import java.util.List;
 /**
  * Created by Cedric on 07/03/2016.
  */
-public class GameSurfaceView extends SurfaceView implements SensorEventListener, SurfaceHolder.Callback {
+public class GameSurfaceView extends SurfaceView implements SensorEventListener, SurfaceHolder.Callback, GameObjectEventsObserver {
 
     private SurfaceHolder holder;
 
 
     private Paddle paddle;
     private List<GameObject> objectsOnScene;
+    private List<GameObject> needToBeRemoved;
 
     private volatile boolean isUpdatingScene;
     private SensorManager senSensorManager;
@@ -38,8 +39,17 @@ public class GameSurfaceView extends SurfaceView implements SensorEventListener,
         holder = getHolder();
         holder.addCallback(this);
         objectsOnScene = new ArrayList<GameObject>();
+        needToBeRemoved = new ArrayList<GameObject>();//necessaire pour éviter la modification concurente
         paddle = new Paddle(resources);
-        objectsOnScene.add(new Ball(resources));
+        Ball b = new Ball(resources);
+        b.addListener(this);
+        objectsOnScene.add(b);
+        b=new Ball(resources, 100,0,5,-5);
+        b.addListener(this);
+        objectsOnScene.add(b);
+        b=new Ball(resources, 0,100,-5,5);
+        b.addListener(this);
+        objectsOnScene.add(b);
     }
 
     public void resume()
@@ -63,7 +73,7 @@ public class GameSurfaceView extends SurfaceView implements SensorEventListener,
         if(canvas == null)
             return;
 
-        canvas.drawARGB(255,30,30,30);
+        canvas.drawARGB(255, 30, 30, 30);
         paddle.drawOnScene(canvas);
         for(GameObject g : objectsOnScene)
             g.drawOnScene(canvas);
@@ -78,20 +88,14 @@ public class GameSurfaceView extends SurfaceView implements SensorEventListener,
             return;
         isUpdatingScene = true;
         Log.i("STARTQUITUE DE LA MORT", "EVENT");
-        /*Canvas canvas = holder.lockCanvas();
-        if(canvas == null) {
-            isUpdatingScene = false;
-            return;
-        }
-        canvas.drawARGB(255,30,30,30);
-        int canvasWidth = canvas.getWidth();
-        int canvasHeight = canvas.getHeight();
-        holder.unlockCanvasAndPost(canvas);*/
 
-        paddle.updateState(500, 800);
-        for(GameObject g : objectsOnScene) {
-            g.updateState(500, 800);
+        paddle.updateState(this.getWidth(), this.getHeight(), paddle);
+        for(GameObject g : objectsOnScene)
+        {
+            g.updateState(this.getWidth(), this.getHeight(), paddle);
         }
+        objectsOnScene.removeAll(needToBeRemoved);
+        needToBeRemoved.clear();
         drawSurface();
 
         isUpdatingScene = false;
@@ -105,6 +109,8 @@ public class GameSurfaceView extends SurfaceView implements SensorEventListener,
     @Override
     public void surfaceCreated(SurfaceHolder holder) {
         Log.i("STARTQUITUE DE LA MORT", "Surface CREATED");
+        paddle.initializePosition(this.getHeight());
+        resume();
     }
 
     @Override
@@ -115,5 +121,11 @@ public class GameSurfaceView extends SurfaceView implements SensorEventListener,
     @Override
     public void surfaceDestroyed(SurfaceHolder holder) {
         Log.i("STARTQUITUE DE LA MORT", "Surface DESTROYED");
+    }
+
+    @Override
+    public void onGameObjectNeedToBeDestroyed(GameObject gameObject)
+    {
+        needToBeRemoved.add(gameObject);
     }
 }

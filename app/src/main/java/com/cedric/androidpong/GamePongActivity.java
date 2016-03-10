@@ -24,7 +24,7 @@ public class GamePongActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        gameSurfaceView.resume();
+        //gameSurfaceView.resume();
     }
 
     @Override

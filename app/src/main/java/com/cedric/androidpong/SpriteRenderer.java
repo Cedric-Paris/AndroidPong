@@ -21,4 +21,14 @@ public class SpriteRenderer {
     {
         canvas.drawBitmap(spriteBitmap, posXLeft, PosYTop, null);
     }
+
+    public int getWidth()
+    {
+        return spriteBitmap.getWidth();
+    }
+
+    public int getHeight()
+    {
+        return spriteBitmap.getHeight();
+    }
 }
