@@ -13,6 +13,7 @@ import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.WindowManager;
+import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,7 +25,6 @@ public class GameSurfaceView extends SurfaceView implements SensorEventListener,
 
     private SurfaceHolder holder;
 
-
     private Paddle paddle;
     private List<GameObject> objectsOnScene;
     private List<GameObject> needToBeRemoved;
@@ -32,6 +32,7 @@ public class GameSurfaceView extends SurfaceView implements SensorEventListener,
     private volatile boolean isUpdatingScene;
     private SensorManager senSensorManager;
     private Sensor senAccelerometer;
+
     private int orientationNumber = 0;//0 = portrait 1= paysage
     private int orientationEffectOnValues = -1;
 
@@ -65,7 +66,11 @@ public class GameSurfaceView extends SurfaceView implements SensorEventListener,
     public void pause()
     {
         Log.i("STARTQUITUE DE LA MORT", "Surface : PAUSE first");
-        senSensorManager.unregisterListener(this, senAccelerometer);
+        if(senSensorManager != null)
+        {
+            senSensorManager.unregisterListener(this, senAccelerometer);
+            senSensorManager = null;
+        }
         Log.i("STARTQUITUE DE LA MORT", "Surface : PAUSE");
     }
 
@@ -112,7 +117,6 @@ public class GameSurfaceView extends SurfaceView implements SensorEventListener,
     public void surfaceCreated(SurfaceHolder holder) {
         Log.i("STARTQUITUE DE LA MORT", "Surface CREATED");
         paddle.initializePosition(this.getHeight());
-        resume();
     }
 
     @Override
@@ -149,4 +153,5 @@ public class GameSurfaceView extends SurfaceView implements SensorEventListener,
     {
         needToBeRemoved.add(gameObject);
     }
+
 }

@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">AndroidPong</string>
+    <string name="no_bluetooth">Bluetooth non supporté sur cet appareil</string>
+    <string name="bluetooth_unable">Bluetooth non activé</string>
 </resources>
