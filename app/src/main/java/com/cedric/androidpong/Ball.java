@@ -2,6 +2,8 @@ package com.cedric.androidpong;
 
 import android.content.res.Resources;
 import android.graphics.RectF;
+import android.hardware.SensorEvent;
+import android.util.Log;
 
 
 /**
@@ -10,8 +12,8 @@ import android.graphics.RectF;
 public class Ball extends GameObject
 {
 
-    private float xVectorDirection = 5;
-    private float yVectorDirection = 5;
+    private float xVectorDirection = 1;
+    private float yVectorDirection = 1;
 
     public Ball(Resources resources, float posXLeft, float posYTop, float xDirection, float yDirection)
     {
@@ -35,10 +37,13 @@ public class Ball extends GameObject
         this.yVectorDirection = yVectorDirection;
     }
 
-    public void updateState(int widthDrawArea, int heightDrawArea, Paddle mainPaddle)
+    public void updateState(int widthDrawArea, int heightDrawArea, Paddle mainPaddle, float sensorEventValue)
     {
-        posXLeft += xVectorDirection;
-        posYTop += yVectorDirection;
+        float heightScreenSpeed = heightDrawArea*0.00625f;//pour que le Vecteur direction ait le meme effet sur tout les ecrans -> calcul un vecteur relatif d'une certaine facon
+        float widthSreenSpeed = widthDrawArea*0.01f;
+        Log.i("STARTQUITUEE", "" + widthSreenSpeed);
+        posXLeft += xVectorDirection * widthSreenSpeed;
+        posYTop += yVectorDirection * heightScreenSpeed;
         if(posXLeft > widthDrawArea-sprite.getHeight() || posXLeft < 0)
             rebondSurVerticale();
         if(posYTop < 0)

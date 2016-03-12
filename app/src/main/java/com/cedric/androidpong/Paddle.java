@@ -1,12 +1,15 @@
 package com.cedric.androidpong;
 
 import android.content.res.Resources;
+import android.hardware.SensorEvent;
 import android.util.Log;
 
 /**
  * Created by Cedric on 07/03/2016.
  */
 public class Paddle extends GameObject{
+
+    private float xSpeed = 0;
 
     public Paddle(Resources resources, float posXLeft, float posYTop)
     {
@@ -18,15 +21,14 @@ public class Paddle extends GameObject{
         super(resources, R.drawable.paddle_sprite, 50, 50);
     }
 
-    int v = 3;//temp
-    public void updateState(int widthDrawArea, int heightDrawArea, Paddle mainPaddle)
+    public void updateState(int widthDrawArea, int heightDrawArea, Paddle mainPaddle, float sensorEventValue)
     {
-        //posXLeft+=1;
-        posXLeft+=v;
+        xSpeed = sensorEventValue*(widthDrawArea*0.01f);
+        posXLeft += xSpeed;
         if(posXLeft > (widthDrawArea-sprite.getWidth()))
-            v=-3;
+            posXLeft = widthDrawArea-sprite.getWidth();
         if(posXLeft < 0)
-            v=3;
+            posXLeft = 0;
     }
 
     public void initializePosition(int surfaceHeigth)

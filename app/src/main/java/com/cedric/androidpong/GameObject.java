@@ -3,6 +3,7 @@ package com.cedric.androidpong;
 import android.content.res.Resources;
 import android.graphics.Canvas;
 import android.graphics.RectF;
+import android.hardware.SensorEvent;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,7 +26,7 @@ public abstract class GameObject {
         sprite = new SpriteRenderer(resources, indexSpriteRes);
     }
 
-    public abstract void updateState(int widthDrawArea, int heightDrawArea, Paddle mainPaddle);
+    public abstract void updateState(int widthDrawArea, int heightDrawArea, Paddle mainPaddle, float sensorEventValue);
 
     public void drawOnScene(Canvas canvas)
     {

@@ -32,6 +32,8 @@ public class GameSurfaceView extends SurfaceView implements SensorEventListener,
     private volatile boolean isUpdatingScene;
     private SensorManager senSensorManager;
     private Sensor senAccelerometer;
+    private int orientationNumber = 0;//0 = portrait 1= paysage
+    private int orientationEffectOnValues = -1;
 
     public GameSurfaceView(Context context, Resources resources)
     {
@@ -44,10 +46,10 @@ public class GameSurfaceView extends SurfaceView implements SensorEventListener,
         Ball b = new Ball(resources);
         b.addListener(this);
         objectsOnScene.add(b);
-        b=new Ball(resources, 100,0,5,-5);
+        b=new Ball(resources, 100,0,1,-1);
         b.addListener(this);
         objectsOnScene.add(b);
-        b=new Ball(resources, 0,100,-5,5);
+        b=new Ball(resources, 0,100,-1,1);
         b.addListener(this);
         objectsOnScene.add(b);
     }
@@ -89,10 +91,10 @@ public class GameSurfaceView extends SurfaceView implements SensorEventListener,
         isUpdatingScene = true;
         Log.i("STARTQUITUE DE LA MORT", "EVENT");
 
-        paddle.updateState(this.getWidth(), this.getHeight(), paddle);
+        paddle.updateState(this.getWidth(), this.getHeight(), paddle, event.values[orientationNumber]*orientationEffectOnValues);
         for(GameObject g : objectsOnScene)
         {
-            g.updateState(this.getWidth(), this.getHeight(), paddle);
+            g.updateState(this.getWidth(), this.getHeight(), paddle, event.values[orientationNumber]*orientationEffectOnValues);
         }
         objectsOnScene.removeAll(needToBeRemoved);
         needToBeRemoved.clear();
@@ -115,7 +117,26 @@ public class GameSurfaceView extends SurfaceView implements SensorEventListener,
 
     @Override
     public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
-        Log.i("STARTQUITUE DE LA MORT", "Surface CHANGED");
+        switch(this.getDeviceOrientation())
+        {
+            case Surface.ROTATION_0:
+                orientationNumber = 0;
+                orientationEffectOnValues= -1;
+                break;
+            case Surface.ROTATION_90:
+                orientationNumber = 1;
+                orientationEffectOnValues = 1;
+                break;
+            case Surface.ROTATION_270:
+                orientationNumber = 1;
+                orientationEffectOnValues = -1;
+                break;
+        }
+    }
+
+    private int getDeviceOrientation()
+    {
+        return ((WindowManager) getContext().getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay().getRotation();
     }
 
     @Override
