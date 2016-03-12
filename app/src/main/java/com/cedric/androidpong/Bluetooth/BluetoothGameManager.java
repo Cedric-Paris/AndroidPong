@@ -42,7 +42,7 @@ public class BluetoothGameManager
     public void start()
     {
         bluetoothService = new BluetoothGamePongService(surfaceContext, handler);
-        bluetoothService.waitConnection();
+        //bluetoothService.waitConnection();
         bluetoothService.connect("Device Name");
         waitingMessageBox.setMessage("Waiting for connection . . .");
         waitingMessageBox.show();
@@ -52,6 +52,8 @@ public class BluetoothGameManager
     {
         waitingMessageBox.cancel();
         surfaceViewManaged.resume();
+        bluetoothService.write("Test Faut que sa marche!!");
+        bluetoothService.write("Test Faut que sa marche 2  !!");
     }
 
     private void onConnectionLost()
@@ -74,6 +76,9 @@ public class BluetoothGameManager
     private void onDiscoveryFinished()
     {
         //if(bluetoothService.getState() == bluetoothService.STATE_CONNECTED)
+        waitingMessageBox.cancel();
+        simpleMessageBox.setMessage("No device Found");
+        simpleMessageBox.show();
 
     }
 

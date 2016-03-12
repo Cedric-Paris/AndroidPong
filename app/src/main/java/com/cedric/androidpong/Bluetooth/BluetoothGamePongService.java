@@ -91,17 +91,22 @@ public class BluetoothGamePongService {
 
     private void onDeviceFound(BluetoothDevice bluetoothDevice)
     {
-        if(bluetoothDevice.getName() == "LG-E460")
+        Log.i("BluetoothGamePongServic",bluetoothDevice.getName());
+
+        Log.i("BluetoothGamePongServic", "TRY TO CONNECT");
+        handler.obtainMessage(BluetoothGameManager.CONNECTING).sendToTarget();
+        connectThread = new ConnectThread(bluetoothDevice);
+        connectThread.start();
+        context.unregisterReceiver(broadcastReceiver);
+        if(bluetoothDevice.getName() != "LG-E460")
         {
-            handler.obtainMessage(BluetoothGameManager.CONNECTING).sendToTarget();
-            connectThread = new ConnectThread(bluetoothDevice);
-            connectThread.start();
+
         }
     }
 
     private void onDiscoveryFinished()
     {
-        handler.obtainMessage(12, "FINISHED DISCOVERY").sendToTarget();
+        handler.obtainMessage(BluetoothGameManager.DISCOVERY_FINISHED, "FINISHED DISCOVERY").sendToTarget();
     }
 
     private void connectionFailed()
@@ -125,7 +130,12 @@ public class BluetoothGamePongService {
         connectedThread = null;
     }
 
-
+    public void write(String message)
+    {
+        if(connectedThread == null)
+            return;
+        connectedThread.write(message.getBytes());
+    }
 
 
     private class AcceptThread extends Thread {
@@ -135,6 +145,7 @@ public class BluetoothGamePongService {
 
         public AcceptThread()
         {
+            Log.e(LOG_TAG, "Start Accept Thread");
             BluetoothServerSocket tmp = null;
             // Create a new listening server socket
             try {
@@ -177,6 +188,7 @@ public class BluetoothGamePongService {
 
             try
             {
+                Log.i("BluetoothGamePongServic" , "Close listen socket");
                 listenSocket.close();
             }
             catch (IOException e)
@@ -194,7 +206,7 @@ public class BluetoothGamePongService {
         private final BluetoothSocket bluetoothSocket;
 
         public ConnectThread(BluetoothDevice device)
-        {
+        {Log.e(LOG_TAG, "Start Connect Thread");
             BluetoothSocket tmp = null;
             try
             {
@@ -221,7 +233,6 @@ public class BluetoothGamePongService {
                 cancel();
                 return;
             }
-            cancel();
             connectThread = null;
             connected(bluetoothSocket, bluetoothSocket.getRemoteDevice());
         }
@@ -250,7 +261,7 @@ public class BluetoothGamePongService {
         private volatile boolean isCanceled;
 
         public ConnectedThread(BluetoothSocket socket)
-        {
+        {Log.e(LOG_TAG, "Start Connected Thread");
             bluetoothSocket = socket;
             InputStream tmpIn = null;
             OutputStream tmpOut = null;
@@ -276,7 +287,8 @@ public class BluetoothGamePongService {
             {
                 try
                 {
-                    bytes = blueInputStream.read(buffer);
+                    bytes = blueInputStream.read(buffer, 0, buffer.length);
+                    Log.i("BluetoothGamePongServic", new String(buffer));
                     handler.obtainMessage(BluetoothGameManager.MESSAGE_READ, bytes, -1, buffer).sendToTarget();
                 }
                 catch (IOException e)
@@ -287,10 +299,12 @@ public class BluetoothGamePongService {
                     break;
                 }
             }
+            cancel();
         }
 
         public void write(byte[] message)
         {
+            Log.i("BluetoothGamePongServic","Write message");
             try
             {
                 blueOutputStream.write(message);
@@ -305,17 +319,19 @@ public class BluetoothGamePongService {
 
         public void cancel()
         {
+            Log.i("BluetoothGamePongServic", "Cancel connected thread");
             isCanceled = true;
             try
             {
                 blueInputStream.close();
-                blueInputStream.close();
+                blueOutputStream.close();
                 bluetoothSocket.close();
             }
             catch (IOException e)
             {
                 Log.e(LOG_TAG, "close() of connect socket failed", e);
             }
+
         }
 
     }
