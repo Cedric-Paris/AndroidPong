@@ -3,7 +3,10 @@ package com.cedric.androidpong;
 import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Matrix;
+import android.graphics.Paint;
+import android.graphics.Rect;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -16,6 +19,8 @@ import android.view.SurfaceView;
 import android.view.WindowManager;
 import android.widget.Toast;
 
+import com.cedric.androidpong.Bluetooth.BluetoothGameManager;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -26,9 +31,14 @@ public class GameSurfaceView extends SurfaceView implements SensorEventListener,
 
     private SurfaceHolder holder;
 
+    private Paint paintTextStyle;
+    private static final int colorThis = Color.argb(150, 0, 162, 232);
+    private static final int colorOther = Color.argb(150, 255, 127, 39);
+
     private Paddle paddle;
     private List<GameObject> objectsOnScene;
-    private List<GameObject> needToBeRemoved;
+    private volatile List<GameObject> needToBeRemoved;
+    private volatile List<GameObject> needToBeAdded;
 
     private volatile boolean isUpdatingScene;
     private SensorManager senSensorManager;
@@ -37,6 +47,8 @@ public class GameSurfaceView extends SurfaceView implements SensorEventListener,
     private int orientationNumber = 0;//0 = portrait 1= paysage
     private int orientationEffectOnValues = -1;
 
+    private GameManager gameManager;
+
     public GameSurfaceView(Context context, Resources resources, Bundle savedInstanceState)
     {
         super(context);
@@ -44,6 +56,11 @@ public class GameSurfaceView extends SurfaceView implements SensorEventListener,
         holder.addCallback(this);
         objectsOnScene = new ArrayList<GameObject>();
         needToBeRemoved = new ArrayList<GameObject>();//necessaire pour éviter la modification concurente
+        needToBeAdded = new ArrayList<GameObject>();
+
+        paintTextStyle = new Paint(Paint.ANTI_ALIAS_FLAG);
+        paintTextStyle.setStyle(Paint.Style.FILL);
+
         if(savedInstanceState != null)
         {
             restoreInstanceState(resources, savedInstanceState);
@@ -59,6 +76,11 @@ public class GameSurfaceView extends SurfaceView implements SensorEventListener,
         b=new Ball(resources, 0,0.1f,-1,1);
         b.addListener(this);
         objectsOnScene.add(b);
+    }
+
+    public void registerGameManager(BluetoothGameManager manager)
+    {
+        this.gameManager = manager;
     }
 
     private void restoreInstanceState(Resources resources, Bundle savedInstanceState)
@@ -102,6 +124,12 @@ public class GameSurfaceView extends SurfaceView implements SensorEventListener,
 
         canvas.drawARGB(255, 30, 30, 30);
         paddle.drawOnScene(canvas);
+        paintTextStyle.setTextAlign(Paint.Align.RIGHT);
+        paintTextStyle.setColor(colorThis);
+        canvas.drawText(gameManager.getScoreThis() + " ", this.getWidth() / 2, (this.getHeight() * 0.07f) + paintTextStyle.getTextSize(), paintTextStyle);
+        paintTextStyle.setTextAlign(Paint.Align.LEFT);
+        paintTextStyle.setColor(colorOther);
+        canvas.drawText(" "+gameManager.getScoreOther(),this.getWidth()/2, (this.getHeight()*0.07f)+paintTextStyle.getTextSize(), paintTextStyle);
         for(GameObject g : objectsOnScene)
             g.drawOnScene(canvas);
 
@@ -116,12 +144,23 @@ public class GameSurfaceView extends SurfaceView implements SensorEventListener,
         isUpdatingScene = true;
 
         paddle.updateState(this.getWidth(), this.getHeight(), paddle, event.values[orientationNumber]*orientationEffectOnValues);
+        int b=0;
+        synchronized (needToBeAdded)
+        {
+            objectsOnScene.addAll(needToBeAdded);
+            needToBeAdded.clear();
+        }
         for(GameObject g : objectsOnScene)
         {
-            g.updateState(this.getWidth(), this.getHeight(), paddle, event.values[orientationNumber]*orientationEffectOnValues);
+            b++;
+            g.updateState(this.getWidth(), this.getHeight(), paddle, event.values[orientationNumber] * orientationEffectOnValues);
         }
-        objectsOnScene.removeAll(needToBeRemoved);
-        needToBeRemoved.clear();
+        Log.i("BluetoothGame", "nb Obj:"+b);
+        synchronized (needToBeRemoved)
+        {
+            objectsOnScene.removeAll(needToBeRemoved);
+            needToBeRemoved.clear();
+        }
         drawSurface();
 
         isUpdatingScene = false;
@@ -136,6 +175,7 @@ public class GameSurfaceView extends SurfaceView implements SensorEventListener,
     public void surfaceCreated(SurfaceHolder holder) {
         Log.i("STARTQUITUE DE LA MORT", "Surface CREATED");
         paddle.initializePosition(this.getHeight());
+        paintTextStyle.setTextSize((this.getWidth() * 0.2f));
     }
 
     @Override
@@ -179,12 +219,28 @@ public class GameSurfaceView extends SurfaceView implements SensorEventListener,
         bundle.putSerializable("Paddle", paddle);
     }
 
-
+    public void addObjectOnScene(GameObject gameObject)
+    {
+        gameObject.addListener(this);
+        synchronized (needToBeAdded)
+        {
+            needToBeAdded.add(gameObject);
+        }
+    }
 
     @Override
     public void onGameObjectNeedToBeDestroyed(GameObject gameObject)
     {
-        needToBeRemoved.add(gameObject);
+        Log.i("BluetoothGame", "OBJECT DESTROYED");
+        synchronized (needToBeRemoved)
+        {
+            needToBeRemoved.add(gameObject);
+            if(gameObject.getClass().getName() == Ball.class.getName())
+            {
+                Log.i("BluetoothGame", "OBJECT DESTROYED IS BALL");
+                gameManager.onBallDestroyed((Ball)gameObject);
+            }
+        }
     }
 
 }

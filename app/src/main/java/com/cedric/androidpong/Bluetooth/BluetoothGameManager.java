@@ -14,6 +14,8 @@ import android.os.Message;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.cedric.androidpong.Ball;
+import com.cedric.androidpong.GameManager;
 import com.cedric.androidpong.GameSurfaceView;
 
 import java.util.ArrayList;
@@ -24,7 +26,7 @@ import java.util.TimerTask;
 /**
  * Created by Cedric on 12/03/2016.
  */
-public class BluetoothGameManager
+public class BluetoothGameManager extends GameManager
 {
     public static final int CONNECTION_ESTABLISHED = 1;
     public static final int CONNECTION_LOST = 2;
@@ -35,9 +37,8 @@ public class BluetoothGameManager
 
     public static final int CLIENT = 1;
     public static final int SERVER = 2;
-    public int bluetoothRole;
+    public int bluetoothRole = 0;
 
-    private GameSurfaceView surfaceViewManaged;
     private Context surfaceContext;
     private AlertDialog simpleMessageBox;
     private ProgressDialog waitingMessageBox;
@@ -48,9 +49,16 @@ public class BluetoothGameManager
 
     private BluetoothGamePongService bluetoothService;
 
-    public BluetoothGameManager(GameSurfaceView gameSurfaceView)
+    public BluetoothGameManager(GameSurfaceView gameSurfaceView, int role, Bundle savedInstanceState)
     {
+        if(savedInstanceState != null) {
+            this.bluetoothRole = savedInstanceState.getInt("BluetoothRole");
+        }
+        else{
+            this.bluetoothRole = role;
+        }
         surfaceViewManaged = gameSurfaceView;
+        surfaceViewManaged.registerGameManager(this);
         surfaceContext = gameSurfaceView.getContext();
         simpleMessageBox = new AlertDialog.Builder(surfaceContext).create();
         simpleMessageBox.setCancelable(false);
@@ -58,11 +66,10 @@ public class BluetoothGameManager
         waitingMessageBox.setCancelable(false);
     }
 
-    public void start(int role)
+    public void start()
     {
-        this.bluetoothRole = role;
         bluetoothService = new BluetoothGamePongService(surfaceContext, handler);
-        if(role == CLIENT)
+        if(bluetoothRole == CLIENT)
         {
             bluetoothService.getDevices(broadcastReceiver);
             waitingMessageBox.setMessage("Search...");
@@ -76,9 +83,10 @@ public class BluetoothGameManager
         }
     }
 
-
+    @Override
     public void saveInstanceState(Bundle bundle)
     {
+        bundle.putInt("BluetoothRole", bluetoothRole);
         if(bluetoothService != null && bluetoothService.getState() == BluetoothGamePongService.STATE_CONNECTED)
         {
             bundle.putString("DeviceAdress", bluetoothService.getDeviceConnected().getAddress());
@@ -86,6 +94,17 @@ public class BluetoothGameManager
         surfaceViewManaged.saveInstanceState(bundle);
     }
 
+    @Override
+    public void notifyOtherBallLost()
+    {
+        bluetoothService.write(CODE_BALL_LOST + this.argsSeparator + "BALL LOST");
+    }
+
+    @Override
+    public void sendBallToOther(float ballXPosition, float xVectorDirection, float yVectorDirection)
+    {
+        bluetoothService.write(CODE_BALL_ARRIVED + this.argsSeparator + "BALL ARRIVED" + this.argsSeparator + ballXPosition + this.argsSeparator + xVectorDirection + this.argsSeparator+yVectorDirection);
+    }
 
     private final BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
         @Override
@@ -193,9 +212,13 @@ public class BluetoothGameManager
     };
 
 
+    private static final String argsSeparator = "!";
+
     private static final int CODE_CONNECTION_QUERY = 1;
     private static final int CODE_CONNECTION_OK = 2;
     private static final int CODE_GAME_LAUNCHED = 3;
+    private static final int CODE_BALL_LOST = 4;
+    private static final int CODE_BALL_ARRIVED = 5;
 
 
     private boolean isCommunicationOkThis;
@@ -204,7 +227,7 @@ public class BluetoothGameManager
 
     private synchronized void onMessageRead(String message)
     {
-        String[] tabMessages = message.split(",");
+        String[] tabMessages = message.split(argsSeparator);
 
         int msgCode = Integer.parseInt(tabMessages[0]);
         switch(msgCode)
@@ -212,7 +235,7 @@ public class BluetoothGameManager
             case CODE_CONNECTION_QUERY:
                 isCommunicationOkOther = true;
                 Log.i("SSSSSSSSSSSSSSSS","Other Ok");
-                bluetoothService.write(CODE_CONNECTION_OK+",NONE");
+                bluetoothService.write(CODE_CONNECTION_OK + this.argsSeparator + "NONE");
                 break;
             case CODE_CONNECTION_OK:
                 Log.i("SSSSSSSSSSSSSSSS","This OK");
@@ -222,11 +245,17 @@ public class BluetoothGameManager
                 isGameLaunchedAfterConnectionOk = true;
                 startGame();
                 break;
+            case CODE_BALL_LOST:
+                onOtherLostBall();
+                break;
+            case CODE_BALL_ARRIVED:
+                onBallArrived(Float.parseFloat(tabMessages[2]),Float.parseFloat(tabMessages[3]), Float.parseFloat(tabMessages[4]));
+                break;
         }
         if(isCommunicationOkThis && isCommunicationOkOther && !isGameLaunchedAfterConnectionOk)
         {
             isGameLaunchedAfterConnectionOk = true;
-            bluetoothService.write(CODE_GAME_LAUNCHED+",NONE");
+            bluetoothService.write(CODE_GAME_LAUNCHED + this.argsSeparator + "NONE");
             startGame();
         }
         Log.i("TESTESTESTEST0", message);
@@ -242,7 +271,7 @@ public class BluetoothGameManager
 
             @Override
             public void run() {
-                bluetoothService.write(CODE_CONNECTION_QUERY+",NONE");
+                bluetoothService.write(CODE_CONNECTION_QUERY + argsSeparator + "NONE");
                 if(isCommunicationOkThis)
                     cancel();
             }

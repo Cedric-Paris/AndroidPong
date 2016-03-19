@@ -283,7 +283,7 @@ public class BluetoothGamePongService {
 
         public void run()
         {
-            byte[] buffer = new byte[400];
+            byte[] buffer = new byte[500];
             int bytes;
             // Keep listening to the InputStream while connected
             while (!isCanceled)

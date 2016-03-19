@@ -60,6 +60,16 @@ public abstract class GameObject implements Serializable{
         return new RectF(realXposition, realYposition, realXposition+sprite.getWidth(), realYposition+sprite.getHeight());
     }
 
+    public float getPosXLeftRelative()
+    {
+        return posXLeftRelative;
+    }
+
+    public float getPosYTopRelative()
+    {
+        return posYTopRelative;
+    }
+
     public void addListener(GameObjectEventsObserver listener)
     {
         observers.add(listener);

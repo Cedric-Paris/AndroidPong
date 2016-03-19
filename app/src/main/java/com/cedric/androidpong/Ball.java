@@ -31,6 +31,10 @@ public class Ball extends GameObject
         super(resources, R.drawable.ball, 0, 0);
     }
 
+    public float getXVectorDirection() { return xVectorDirection; }
+
+    public float getYVectorDirection() { return yVectorDirection; }
+
     public void setDirectionVector(float xVectorDirection, float yVectorDirection)
     {
         this.xVectorDirection = xVectorDirection;
@@ -50,11 +54,9 @@ public class Ball extends GameObject
 
         if(realXposition > widthDrawArea-sprite.getHeight() || realXposition < 0)
             rebondSurVerticale();
-        if(realYposition < 0)
-            rebondSurHorizontale();
         if(this.getCollisionRect().intersect(mainPaddle.getCollisionRect()))
             manageCollisionWithPaddle(mainPaddle);
-        if(realYposition >heightDrawArea){
+        if(realYposition >heightDrawArea || realYposition < - sprite.getHeight()){
             notifyObservers();
         }
 

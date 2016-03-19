@@ -30,7 +30,7 @@ public class GamePongActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         gameSurfaceView = new GameSurfaceView(this, this.getResources(), savedInstanceState);
-        gameManager = new BluetoothGameManager(gameSurfaceView);
+        gameManager = new BluetoothGameManager(gameSurfaceView, BluetoothGameManager.SERVER, savedInstanceState);
         //gameSurfaceView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_FULLSCREEN);//Supprime la barre de l'heure en haut
         setContentView(gameSurfaceView);
         initializeBluetooth();
@@ -51,7 +51,7 @@ public class GamePongActivity extends AppCompatActivity {
         if (requestCode == REQUEST_ENABLE_BT) {
             if (resultCode == RESULT_OK)
             {
-                gameManager.start(BluetoothGameManager.CLIENT);
+                gameManager.start();
             }
             else
             {
@@ -73,7 +73,7 @@ public class GamePongActivity extends AppCompatActivity {
         }
         else
         {
-            gameManager.start(BluetoothGameManager.CLIENT);
+            gameManager.start();
         }
     }
 
