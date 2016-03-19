@@ -2,7 +2,9 @@ package com.cedric.androidpong;
 
 import android.bluetooth.BluetoothAdapter;
 import android.content.Intent;
-import android.content.res.Configuration;
+import android.content.pm.PackageManager;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -10,6 +12,8 @@ import android.view.WindowManager;
 import android.widget.Toast;
 
 import com.cedric.androidpong.Bluetooth.BluetoothGameManager;
+
+import java.util.jar.Manifest;
 
 
 public class GamePongActivity extends AppCompatActivity {
@@ -20,11 +24,12 @@ public class GamePongActivity extends AppCompatActivity {
     private BluetoothAdapter bluetoothAdapter;
     private static final int REQUEST_ENABLE_BT = 1;
 
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-        gameSurfaceView = new GameSurfaceView(this, this.getResources());
+        gameSurfaceView = new GameSurfaceView(this, this.getResources(), savedInstanceState);
         gameManager = new BluetoothGameManager(gameSurfaceView);
         //gameSurfaceView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_FULLSCREEN);//Supprime la barre de l'heure en haut
         setContentView(gameSurfaceView);
@@ -41,22 +46,12 @@ public class GamePongActivity extends AppCompatActivity {
         }
     }
 
-    /*private void ensureDiscoverable()
-    {
-        if (bluetoothAdapter.getScanMode() !=
-                BluetoothAdapter.SCAN_MODE_CONNECTABLE_DISCOVERABLE) {
-            Intent discoverableIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE);
-            discoverableIntent.putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, 300);
-            startActivity(discoverableIntent);
-        }
-    }*/
-
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == REQUEST_ENABLE_BT) {
             if (resultCode == RESULT_OK)
             {
-                gameManager.start();
+                gameManager.start(BluetoothGameManager.CLIENT);
             }
             else
             {
@@ -66,9 +61,11 @@ public class GamePongActivity extends AppCompatActivity {
         }
     }
 
+
     @Override
     public void onStart()
     {
+        Log.i("BluetoothGame","Start GameManager");
         super.onStart();
         if (!bluetoothAdapter.isEnabled())
         {
@@ -76,7 +73,7 @@ public class GamePongActivity extends AppCompatActivity {
         }
         else
         {
-            gameManager.start();
+            gameManager.start(BluetoothGameManager.CLIENT);
         }
     }
 
@@ -93,9 +90,17 @@ public class GamePongActivity extends AppCompatActivity {
     }
 
     @Override
+    public void onSaveInstanceState(Bundle savedInstanceState) {
+        gameManager.saveInstanceState(savedInstanceState);
+        super.onSaveInstanceState(savedInstanceState);
+    }
+
+    @Override
     protected void onDestroy() {
         Log.i("STARTQUITUE DE LA MORT", "DESTROY");
         getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        if(gameManager!=null)
+            gameManager.onDestroy();
         super.onDestroy();
     }
 }

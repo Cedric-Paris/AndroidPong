@@ -5,37 +5,59 @@ import android.graphics.Canvas;
 import android.graphics.RectF;
 import android.hardware.SensorEvent;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * Created by Cedric on 07/03/2016.
  */
-public abstract class GameObject {
+public abstract class GameObject implements Serializable{
 
-    private List<GameObjectEventsObserver> observers = new ArrayList<GameObjectEventsObserver>();
+    private transient List<GameObjectEventsObserver> observers = new ArrayList<GameObjectEventsObserver>();
 
-    protected SpriteRenderer sprite;
-    protected float posXLeft;
-    protected float posYTop;
+    protected transient Resources appResources;
 
-    public GameObject(Resources resources, int indexSpriteRes, float posXLeft, float posYTop)
+    protected transient SpriteRenderer sprite;
+
+    protected transient float realXposition;
+    protected float posXLeftRelative;
+    protected transient float realYposition;
+    protected float posYTopRelative;
+
+    public GameObject(Resources resources, int indexSpriteRes, float posXLeftRelative, float posYTopRelative)
     {
-        this.posXLeft = posXLeft;
-        this.posYTop = posYTop;
+        this.posXLeftRelative = posXLeftRelative;
+        this.posYTopRelative = posYTopRelative;
+        appResources = resources;
+        initializeSprite(resources, indexSpriteRes);
+    }
+
+    public void setAppResources(Resources resources)
+    {
+        appResources = resources;
+    }
+
+    protected void initializeSprite(Resources resources, int indexSpriteRes)
+    {
         sprite = new SpriteRenderer(resources, indexSpriteRes);
     }
 
     public abstract void updateState(int widthDrawArea, int heightDrawArea, Paddle mainPaddle, float sensorEventValue);
 
+    protected float getRelativePosition(float position, int widthDrawArea)
+    {
+        return position / widthDrawArea;
+    }
+
     public void drawOnScene(Canvas canvas)
     {
-        sprite.draw(canvas, posXLeft, posYTop);
+        sprite.draw(canvas, realXposition, realYposition);
     }
 
     public RectF getCollisionRect()
     {
-        return new RectF(posXLeft, posYTop, posXLeft+sprite.getWidth(), posYTop+sprite.getHeight());
+        return new RectF(realXposition, realYposition, realXposition+sprite.getWidth(), realYposition+sprite.getHeight());
     }
 
     public void addListener(GameObjectEventsObserver listener)

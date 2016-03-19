@@ -39,21 +39,27 @@ public class Ball extends GameObject
 
     public void updateState(int widthDrawArea, int heightDrawArea, Paddle mainPaddle, float sensorEventValue)
     {
+        if(sprite == null)
+            initializeSprite(appResources , R.drawable.ball);
+
         float heightScreenSpeed = heightDrawArea*0.00625f;//pour que le Vecteur direction ait le meme effet sur tout les ecrans -> calcul un vecteur relatif d'une certaine facon
         float widthSreenSpeed = widthDrawArea*0.01f;
-        Log.i("STARTQUITUEE", "" + widthSreenSpeed);
-        posXLeft += xVectorDirection * widthSreenSpeed;
-        posYTop += yVectorDirection * heightScreenSpeed;
-        if(posXLeft > widthDrawArea-sprite.getHeight() || posXLeft < 0)
+
+        realXposition = (posXLeftRelative * widthDrawArea) + (xVectorDirection * widthSreenSpeed);
+        realYposition = (posYTopRelative * heightDrawArea) + (yVectorDirection * heightScreenSpeed);
+
+        if(realXposition > widthDrawArea-sprite.getHeight() || realXposition < 0)
             rebondSurVerticale();
-        if(posYTop < 0)
+        if(realYposition < 0)
             rebondSurHorizontale();
         if(this.getCollisionRect().intersect(mainPaddle.getCollisionRect()))
             manageCollisionWithPaddle(mainPaddle);
-        if(posYTop >heightDrawArea){
+        if(realYposition >heightDrawArea){
             notifyObservers();
         }
 
+        posXLeftRelative = getRelativePosition(realXposition, widthDrawArea);
+        posYTopRelative = getRelativePosition(realYposition, heightDrawArea);
     }
 
     private void rebondSurVerticale()
@@ -74,16 +80,16 @@ public class Ball extends GameObject
         if(ballRect.top >= paddleRect.top)//Cas ou la balle arrive en dessous du paddle
         {
             pourcentReduction = ( (ballRect.top - paddleRect.top) * yVectorDirection ) / 100;
-            posYTop = paddleRect.bottom;
-            posXLeft -= xVectorDirection * pourcentReduction;
+            realYposition = paddleRect.bottom;
+            realXposition -= xVectorDirection * pourcentReduction;
             rebondSurHorizontale();
             return;
         }
         if(ballRect.bottom >= paddleRect.top)//Cas ou la balle arrive au dessus du paddle
         {
             pourcentReduction = ( (ballRect.bottom - paddleRect.top) * yVectorDirection ) / 100;
-            posYTop = paddleRect.top - sprite.getHeight();
-            posXLeft -= xVectorDirection * pourcentReduction;
+            realYposition = paddleRect.top - sprite.getHeight();
+            realXposition -= xVectorDirection * pourcentReduction;
             rebondSurHorizontale();
             return;
         }

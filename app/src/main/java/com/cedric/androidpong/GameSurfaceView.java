@@ -8,6 +8,7 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.os.Bundle;
 import android.util.Log;
 import android.view.Surface;
 import android.view.SurfaceHolder;
@@ -36,23 +37,42 @@ public class GameSurfaceView extends SurfaceView implements SensorEventListener,
     private int orientationNumber = 0;//0 = portrait 1= paysage
     private int orientationEffectOnValues = -1;
 
-    public GameSurfaceView(Context context, Resources resources)
+    public GameSurfaceView(Context context, Resources resources, Bundle savedInstanceState)
     {
         super(context);
         holder = getHolder();
         holder.addCallback(this);
         objectsOnScene = new ArrayList<GameObject>();
         needToBeRemoved = new ArrayList<GameObject>();//necessaire pour éviter la modification concurente
+        if(savedInstanceState != null)
+        {
+            restoreInstanceState(resources, savedInstanceState);
+            return;
+        }
         paddle = new Paddle(resources);
         Ball b = new Ball(resources);
         b.addListener(this);
         objectsOnScene.add(b);
-        b=new Ball(resources, 100,0,1,-1);
+        b=new Ball(resources, 0.1f,0,1,-1);
         b.addListener(this);
         objectsOnScene.add(b);
-        b=new Ball(resources, 0,100,-1,1);
+        b=new Ball(resources, 0,0.1f,-1,1);
         b.addListener(this);
         objectsOnScene.add(b);
+    }
+
+    private void restoreInstanceState(Resources resources, Bundle savedInstanceState)
+    {
+        paddle = (Paddle)savedInstanceState.getSerializable("Paddle");
+        String[] gameObjectsKeys = savedInstanceState.getStringArray("GameObjectKeys");
+        GameObject gameObject;
+        for(String key : gameObjectsKeys )
+        {
+            gameObject = (GameObject)savedInstanceState.getSerializable(key);
+            gameObject.addListener(this);
+            gameObject.setAppResources(resources);
+            objectsOnScene.add(gameObject);
+        }
     }
 
     public void resume()
@@ -94,7 +114,6 @@ public class GameSurfaceView extends SurfaceView implements SensorEventListener,
         if(isUpdatingScene)
             return;
         isUpdatingScene = true;
-        Log.i("STARTQUITUE DE LA MORT", "EVENT");
 
         paddle.updateState(this.getWidth(), this.getHeight(), paddle, event.values[orientationNumber]*orientationEffectOnValues);
         for(GameObject g : objectsOnScene)
@@ -138,15 +157,29 @@ public class GameSurfaceView extends SurfaceView implements SensorEventListener,
         }
     }
 
+    @Override
+    public void surfaceDestroyed(SurfaceHolder holder) {}
+
     private int getDeviceOrientation()
     {
         return ((WindowManager) getContext().getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay().getRotation();
     }
 
-    @Override
-    public void surfaceDestroyed(SurfaceHolder holder) {
-        Log.i("STARTQUITUE DE LA MORT", "Surface DESTROYED");
+    public void saveInstanceState(Bundle bundle)
+    {
+        String[] gameObjectsKeys = new String[objectsOnScene.size()];
+        int i =0;
+        for(GameObject gameObject : objectsOnScene)
+        {
+            gameObjectsKeys[i] = "GameObjectKeySave"+i;
+            bundle.putSerializable(gameObjectsKeys[i], gameObject);
+            i++;
+        }
+        bundle.putStringArray("GameObjectKeys", gameObjectsKeys);
+        bundle.putSerializable("Paddle", paddle);
     }
+
+
 
     @Override
     public void onGameObjectNeedToBeDestroyed(GameObject gameObject)

@@ -9,11 +9,11 @@ import android.util.Log;
  */
 public class Paddle extends GameObject{
 
-    private float xSpeed = 0;
+    private transient float xSpeed = 0;
 
-    public Paddle(Resources resources, float posXLeft, float posYTop)
+    public Paddle(Resources resources, float posXLeftRelative, float posYTop)
     {
-        super(resources, R.drawable.paddle_sprite, posXLeft, posYTop);
+        super(resources, R.drawable.paddle_sprite, posXLeftRelative, posYTop);
     }
 
     public Paddle(Resources resources)
@@ -23,18 +23,22 @@ public class Paddle extends GameObject{
 
     public void updateState(int widthDrawArea, int heightDrawArea, Paddle mainPaddle, float sensorEventValue)
     {
+        if(sprite == null)
+            initializeSprite(appResources , R.drawable.paddle_sprite);
         xSpeed = sensorEventValue*(widthDrawArea*0.01f);
-        posXLeft += xSpeed;
-        if(posXLeft > (widthDrawArea-sprite.getWidth()))
-            posXLeft = widthDrawArea-sprite.getWidth();
-        if(posXLeft < 0)
-            posXLeft = 0;
+        realXposition += xSpeed;
+        if(realXposition > (widthDrawArea-sprite.getWidth()))
+            realXposition = widthDrawArea-sprite.getWidth();
+        if(realXposition < 0)
+            realXposition = 0;
+
+        posXLeftRelative = getRelativePosition(realXposition, widthDrawArea);
     }
 
     public void initializePosition(int surfaceHeigth)
     {
         int height = sprite.getHeight();
-        posYTop = surfaceHeigth - height - surfaceHeigth*0.05f;
-
+        realYposition = surfaceHeigth - height - surfaceHeigth*0.05f;
+        posYTopRelative = getRelativePosition(realYposition, surfaceHeigth);
     }
 }

@@ -13,6 +13,8 @@ import android.os.Handler;
 import android.os.ParcelUuid;
 import android.util.Log;
 
+import com.cedric.androidpong.BluetoothGame;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -41,10 +43,18 @@ public class BluetoothGamePongService {
     private ConnectThread connectThread;
     private ConnectedThread connectedThread;
 
+    private BluetoothDevice deviceConnected;
+
+
     public BluetoothGamePongService(Context context, Handler handler) {
         bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         this.handler = handler;
         this.context = context;
+    }
+
+    public BluetoothDevice getDeviceConnected()
+    {
+        return deviceConnected;
     }
 
     public int getState()
@@ -62,26 +72,10 @@ public class BluetoothGamePongService {
         acceptThread.start();
     }
 
-    private final BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent)
-        {
-            String action = intent.getAction();
-            if (BluetoothDevice.ACTION_FOUND.equals(action))
-            {
-                BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
-                onDeviceFound(device);
-            }
-            else if (BluetoothAdapter.ACTION_DISCOVERY_FINISHED.equals(action))
-            {
-                onDiscoveryFinished();
-            }
-        }
-    };
 
-    public void connect(String name)
+
+    public void getDevices(BroadcastReceiver broadcastReceiver)
     {
-        state = STATE_DISCONNECTED;
         IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_FOUND);//Quand on trouve un appareil bluetooth
         context.registerReceiver(broadcastReceiver, filter);
         filter = new IntentFilter(BluetoothAdapter.ACTION_DISCOVERY_FINISHED);//Quand la découverte est fini
@@ -89,19 +83,14 @@ public class BluetoothGamePongService {
         bluetoothAdapter.startDiscovery();
     }
 
-    private void onDeviceFound(BluetoothDevice bluetoothDevice)
+    public void connect(BluetoothDevice device, BroadcastReceiver broadcastReceiver)
     {
-        Log.i("BluetoothGamePongServic",bluetoothDevice.getName());
-
-        Log.i("BluetoothGamePongServic", "TRY TO CONNECT");
-        handler.obtainMessage(BluetoothGameManager.CONNECTING).sendToTarget();
-        connectThread = new ConnectThread(bluetoothDevice);
+        state = STATE_DISCONNECTED;
+        connectThread = new ConnectThread(device);
         connectThread.start();
         context.unregisterReceiver(broadcastReceiver);
-        if(bluetoothDevice.getName() != "LG-E460")
-        {
+        onDiscoveryFinished();
 
-        }
     }
 
     private void onDiscoveryFinished()
@@ -118,6 +107,7 @@ public class BluetoothGamePongService {
     public void connected(BluetoothSocket socket, BluetoothDevice bluetoothDevice)
     {
         state = STATE_CONNECTED;
+        deviceConnected = bluetoothDevice;
         connectedThread = new ConnectedThread(socket);
         connectedThread.start();
         handler.obtainMessage(BluetoothGameManager.CONNECTION_ESTABLISHED).sendToTarget();
@@ -135,6 +125,17 @@ public class BluetoothGamePongService {
         if(connectedThread == null)
             return;
         connectedThread.write(message.getBytes());
+    }
+
+    public void closeServices()
+    {
+        state = STATE_DISCONNECTED;
+        if(acceptThread != null)
+            acceptThread.cancel();
+        if(connectThread != null)
+            connectThread.cancel();
+        if(connectedThread != null)
+            connectedThread.cancel();
     }
 
 
@@ -166,6 +167,7 @@ public class BluetoothGamePongService {
                 try
                 {
                     socket = listenSocket.accept();//Retourne que si connection ou exception
+                    Log.i(LOG_TAG, "Socket Accepter");
                 }
                 catch (IOException e)
                 {
@@ -174,6 +176,7 @@ public class BluetoothGamePongService {
                 }
                 if (socket != null)
                 {
+                    Log.i(LOG_TAG, "socket not null");
                     connected(socket, socket.getRemoteDevice());
                     break;
                 }
@@ -280,7 +283,7 @@ public class BluetoothGamePongService {
 
         public void run()
         {
-            byte[] buffer = new byte[1024];
+            byte[] buffer = new byte[400];
             int bytes;
             // Keep listening to the InputStream while connected
             while (!isCanceled)
@@ -288,7 +291,7 @@ public class BluetoothGamePongService {
                 try
                 {
                     bytes = blueInputStream.read(buffer, 0, buffer.length);
-                    Log.i("BluetoothGamePongServic", new String(buffer));
+                    Log.i("BluetoothGamePongServic", new String(buffer, 0, bytes));
                     handler.obtainMessage(BluetoothGameManager.MESSAGE_READ, bytes, -1, buffer).sendToTarget();
                 }
                 catch (IOException e)
@@ -304,10 +307,11 @@ public class BluetoothGamePongService {
 
         public void write(byte[] message)
         {
-            Log.i("BluetoothGamePongServic","Write message");
+            Log.i("BluetoothGamePongServic","Write message"+new String(message));
             try
             {
                 blueOutputStream.write(message);
+                blueOutputStream.flush();
             }
             catch (IOException e)
             {
