@@ -62,12 +62,15 @@ public class BluetoothGamePongService {
         return state;
     }
 
-    public void waitConnection()
+    public void waitConnection(boolean needDiscoverable)
     {
         state = STATE_DISCONNECTED;
-        Intent discoverableIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE);
-        discoverableIntent.putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, 60);
-        context.startActivity(discoverableIntent);
+        if(needDiscoverable)
+        {
+            Intent discoverableIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE);
+            discoverableIntent.putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, 60);
+            context.startActivity(discoverableIntent);
+        }
         acceptThread = new AcceptThread();
         acceptThread.start();
     }
@@ -81,6 +84,13 @@ public class BluetoothGamePongService {
         filter = new IntentFilter(BluetoothAdapter.ACTION_DISCOVERY_FINISHED);//Quand la découverte est fini
         context.registerReceiver(broadcastReceiver, filter);
         bluetoothAdapter.startDiscovery();
+    }
+
+    public void connect(String deviceAddress)
+    {
+        state = STATE_DISCONNECTED;
+        connectThread = new ConnectThread(bluetoothAdapter.getRemoteDevice(deviceAddress));
+        connectThread.start();
     }
 
     public void connect(BluetoothDevice device, BroadcastReceiver broadcastReceiver)
@@ -291,7 +301,7 @@ public class BluetoothGamePongService {
                 try
                 {
                     bytes = blueInputStream.read(buffer, 0, buffer.length);
-                    Log.i("BluetoothGamePongServic", new String(buffer, 0, bytes));
+                    Log.i("BluetoothGamePongServic", "READ STRING"+ new String(buffer, 0, bytes));
                     handler.obtainMessage(BluetoothGameManager.MESSAGE_READ, bytes, -1, buffer).sendToTarget();
                 }
                 catch (IOException e)

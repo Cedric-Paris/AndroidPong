@@ -144,7 +144,6 @@ public class GameSurfaceView extends SurfaceView implements SensorEventListener,
         isUpdatingScene = true;
 
         paddle.updateState(this.getWidth(), this.getHeight(), paddle, event.values[orientationNumber]*orientationEffectOnValues);
-        int b=0;
         synchronized (needToBeAdded)
         {
             objectsOnScene.addAll(needToBeAdded);
@@ -152,10 +151,8 @@ public class GameSurfaceView extends SurfaceView implements SensorEventListener,
         }
         for(GameObject g : objectsOnScene)
         {
-            b++;
             g.updateState(this.getWidth(), this.getHeight(), paddle, event.values[orientationNumber] * orientationEffectOnValues);
         }
-        Log.i("BluetoothGame", "nb Obj:"+b);
         synchronized (needToBeRemoved)
         {
             objectsOnScene.removeAll(needToBeRemoved);

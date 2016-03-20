@@ -11,6 +11,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -39,7 +40,6 @@ public class BluetoothGameManager extends GameManager
     public static final int SERVER = 2;
     public int bluetoothRole = 0;
 
-    private Context surfaceContext;
     private AlertDialog simpleMessageBox;
     private ProgressDialog waitingMessageBox;
 
@@ -48,15 +48,15 @@ public class BluetoothGameManager extends GameManager
     private List<BluetoothDevice> devices = new ArrayList<BluetoothDevice>();
 
     private BluetoothGamePongService bluetoothService;
+    private String deviceAddress;
+    private boolean isMessageEnable = true;
+    private boolean isReconnecting = false;
+    private boolean isPausedOnConnection = false;
 
-    public BluetoothGameManager(GameSurfaceView gameSurfaceView, int role, Bundle savedInstanceState)
+    public BluetoothGameManager(AppCompatActivity appCompatActivity, GameSurfaceView gameSurfaceView, int role)
     {
-        if(savedInstanceState != null) {
-            this.bluetoothRole = savedInstanceState.getInt("BluetoothRole");
-        }
-        else{
-            this.bluetoothRole = role;
-        }
+        this.activity = appCompatActivity;
+        this.bluetoothRole = role;
         surfaceViewManaged = gameSurfaceView;
         surfaceViewManaged.registerGameManager(this);
         surfaceContext = gameSurfaceView.getContext();
@@ -64,11 +64,31 @@ public class BluetoothGameManager extends GameManager
         simpleMessageBox.setCancelable(false);
         waitingMessageBox = new ProgressDialog(surfaceContext);
         waitingMessageBox.setCancelable(false);
+        waitingMessageBox.setButton(DialogInterface.BUTTON_NEGATIVE, "Annuler et Quitter", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                onStop();
+                activity.finish();
+            }
+        });
+    }
+
+    public BluetoothGameManager(AppCompatActivity appCompatActivity, GameSurfaceView gameSurfaceView, Bundle savedInstanceState)
+    {
+        this(appCompatActivity, gameSurfaceView, savedInstanceState.getInt("BluetoothRole"));
+        deviceAddress = savedInstanceState.getString("DeviceAdress");
+        this.scoreOther = savedInstanceState.getInt("ScoreOther");
+        this.scoreThis = savedInstanceState.getInt("ScoreThis");
     }
 
     public void start()
     {
         bluetoothService = new BluetoothGamePongService(surfaceContext, handler);
+        if(deviceAddress != null)
+        {
+            onConnectionLost();
+            return;
+        }
         if(bluetoothRole == CLIENT)
         {
             bluetoothService.getDevices(broadcastReceiver);
@@ -77,7 +97,7 @@ public class BluetoothGameManager extends GameManager
         }
         else
         {
-            bluetoothService.waitConnection();
+            bluetoothService.waitConnection(true);
             waitingMessageBox.setMessage("Waiting for connection . . .");
             waitingMessageBox.show();
         }
@@ -87,9 +107,11 @@ public class BluetoothGameManager extends GameManager
     public void saveInstanceState(Bundle bundle)
     {
         bundle.putInt("BluetoothRole", bluetoothRole);
-        if(bluetoothService != null && bluetoothService.getState() == BluetoothGamePongService.STATE_CONNECTED)
+        bundle.putInt("ScoreOther", this.scoreOther);
+        bundle.putInt("ScoreThis", this.scoreThis);
+        if(deviceAddress != null)
         {
-            bundle.putString("DeviceAdress", bluetoothService.getDeviceConnected().getAddress());
+            bundle.putString("DeviceAdress", deviceAddress);
         }
         surfaceViewManaged.saveInstanceState(bundle);
     }
@@ -134,7 +156,7 @@ public class BluetoothGameManager extends GameManager
         }
         AlertDialog.Builder builder = new AlertDialog.Builder(this.surfaceContext);
         builder.setTitle("Select a device");
-        builder.setItems((String[])deviceAvailables.toArray(new String[1]), new DialogInterface.OnClickListener() {
+        builder.setItems((String[]) deviceAvailables.toArray(new String[1]), new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 bluetoothService.connect(devices.get(which), broadcastReceiver);
@@ -145,11 +167,19 @@ public class BluetoothGameManager extends GameManager
 
     private void startGame()
     {
+        simpleMessageBox.cancel();
+        waitingMessageBox.cancel();
         surfaceViewManaged.resume();
     }
 
     private void onConnectionEstablished()
     {
+        isPausedOnConnection = false;
+        isReconnecting = false;
+        isGameLaunchedAfterConnectionOk = false;
+        isCommunicationOkThis = false;
+        isCommunicationOkOther = false;
+        deviceAddress = bluetoothService.getDeviceConnected().getAddress();
         waitingMessageBox.cancel();
         initializeCommunicationQuery();
     }
@@ -157,8 +187,32 @@ public class BluetoothGameManager extends GameManager
     private void onConnectionLost()
     {
         surfaceViewManaged.pause();
+        if(isPausedOnConnection)
+        {
+            Log.i("EEEEEEE", "IspausedOnConnection");
+            return;
+        }
+    Log.i("EEEEEEE", "pass Pause");
         waitingMessageBox.setMessage("Connection lost :(\nReconnecting . . .");
         waitingMessageBox.show();
+        if(bluetoothRole == CLIENT){
+            isReconnecting = true;
+            reconnectClient();
+        }
+        else
+        {
+            bluetoothService.waitConnection(false);
+        }
+    }
+
+    private void reconnectClient()
+    {
+        Log.i("TTTTTTTTTT", "ReconnectClient");
+        if(deviceAddress == null)
+        {
+            deviceAddress = bluetoothService.getDeviceConnected().getAddress();
+        }
+        bluetoothService.connect(deviceAddress);
     }
 
     private void onConnecting()
@@ -168,7 +222,33 @@ public class BluetoothGameManager extends GameManager
 
     private void onConnectionFailed()
     {
-        waitingMessageBox.setMessage("Connection failed :(\nWaiting for connection . . .");
+        if(bluetoothRole == CLIENT && isReconnecting)
+        {
+            waitingMessageBox.cancel();
+            simpleMessageBox.cancel();
+            AlertDialog.Builder builder = new AlertDialog.Builder(surfaceContext);
+            builder.setNegativeButton("Quitter", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            onStop();
+                            activity.finish();
+                        }
+                    }
+            );
+            builder.setPositiveButton("Retry", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    simpleMessageBox.cancel();
+                    simpleMessageBox = new AlertDialog.Builder(surfaceContext).create();
+                    simpleMessageBox.setCancelable(false);
+                    Log.i("EEEEEEE","Clic Retry");
+                    onConnectionLost();
+                }
+            });
+            builder.setMessage("Connection failed :(");
+            simpleMessageBox = builder.show();
+        }
+
     }
 
     private void onDiscoveryFinished()
@@ -185,7 +265,11 @@ public class BluetoothGameManager extends GameManager
 
     private final Handler handler = new Handler() {
         @Override
-        public void handleMessage(Message msg) {
+        public synchronized void handleMessage(Message msg) {
+            if(!isMessageEnable)
+            {
+                return;
+            }
             switch (msg.what)
             {
                 case CONNECTION_ESTABLISHED:
@@ -205,7 +289,13 @@ public class BluetoothGameManager extends GameManager
                     break;
                 case MESSAGE_READ:
                     byte[] buffer = (byte[])msg.obj;
-                    onMessageRead(new String(buffer, 0, msg.arg1));
+                    Log.i("BluetoothGame", "ARG 1 = "+msg.arg1);
+                    try {
+                        onMessageRead(new String(buffer, 0, msg.arg1));
+                    }
+                    catch(Exception e) {
+                        Log.e("BluetoothGameManager", "Error on message", e);
+                    }
                     break;
             }
         }
@@ -238,7 +328,7 @@ public class BluetoothGameManager extends GameManager
                 bluetoothService.write(CODE_CONNECTION_OK + this.argsSeparator + "NONE");
                 break;
             case CODE_CONNECTION_OK:
-                Log.i("SSSSSSSSSSSSSSSS","This OK");
+                Log.i("SSSSSSSSSSSSSSSS", "This OK");
                 isCommunicationOkThis = true;
                 break;
             case CODE_GAME_LAUNCHED:
@@ -249,7 +339,9 @@ public class BluetoothGameManager extends GameManager
                 onOtherLostBall();
                 break;
             case CODE_BALL_ARRIVED:
-                onBallArrived(Float.parseFloat(tabMessages[2]),Float.parseFloat(tabMessages[3]), Float.parseFloat(tabMessages[4]));
+                Log.i("BluetoothGame", message);
+                Log.i("BluetoothGame", msgCode+" "+tabMessages.length);
+                onBallArrived(Float.parseFloat(tabMessages[2]), Float.parseFloat(tabMessages[3]), Float.parseFloat(tabMessages[4]));
                 break;
         }
         if(isCommunicationOkThis && isCommunicationOkOther && !isGameLaunchedAfterConnectionOk)
@@ -280,11 +372,39 @@ public class BluetoothGameManager extends GameManager
         timer.scheduleAtFixedRate(communicationQuery, delaisAvantDepart, tempsEntreDeuxTaches);
     }
 
-    public void onDestroy()
+    @Override
+    public void onResume()
+    {
+        if(isPausedOnConnection)
+        {
+            isPausedOnConnection = false;
+            this.start();
+        }
+    }
+
+    @Override
+    public void onPause()
+    {
+        surfaceViewManaged.pause();
+        if(bluetoothService != null && bluetoothService.getState() == BluetoothGamePongService.STATE_CONNECTED)
+        {
+            isPausedOnConnection = true;
+            this.onStop();
+        }
+    }
+
+    @Override
+    public void onStop()
     {
         if(bluetoothService != null)
         {
             bluetoothService.closeServices();
         }
+    }
+
+    @Override
+    public void stopManagerOnceAndForAll()
+    {
+        isMessageEnable = false;
     }
 }

@@ -30,7 +30,27 @@ public class GamePongActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         gameSurfaceView = new GameSurfaceView(this, this.getResources(), savedInstanceState);
-        gameManager = new BluetoothGameManager(gameSurfaceView, BluetoothGameManager.SERVER, savedInstanceState);
+        if(savedInstanceState == null)
+        {
+            int role = -1;
+            try {
+                Bundle bundle = getIntent().getExtras();
+                role = bundle.getInt("role");
+            }
+            catch (Exception e)
+            {
+                finish();
+            }
+            if(role == -1)
+            {
+                finish();
+            }
+            gameManager = new BluetoothGameManager(this, gameSurfaceView, role);
+        }
+        else
+        {
+            gameManager = new BluetoothGameManager(this, gameSurfaceView, savedInstanceState);
+        }
         //gameSurfaceView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_FULLSCREEN);//Supprime la barre de l'heure en haut
         setContentView(gameSurfaceView);
         initializeBluetooth();
@@ -65,8 +85,8 @@ public class GamePongActivity extends AppCompatActivity {
     @Override
     public void onStart()
     {
-        Log.i("BluetoothGame","Start GameManager");
         super.onStart();
+        Log.i("BluetoothGame", "Start GameManager");
         if (!bluetoothAdapter.isEnabled())
         {
             startActivityForResult(new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE), REQUEST_ENABLE_BT);
@@ -79,14 +99,23 @@ public class GamePongActivity extends AppCompatActivity {
 
     @Override
     protected void onResume() {
+        gameManager.onResume();
         super.onResume();
     }
 
     @Override
     protected void onPause(){
         Log.i("STARTQUITUE DE LA MORT", "APP : PAUSE");
-        gameSurfaceView.pause();
+        gameManager.onPause();
         super.onPause();
+    }
+
+    @Override
+    protected void onStop()
+    {
+        if(gameManager!=null)
+            gameManager.onStop();
+        super.onStop();
     }
 
     @Override
@@ -99,8 +128,6 @@ public class GamePongActivity extends AppCompatActivity {
     protected void onDestroy() {
         Log.i("STARTQUITUE DE LA MORT", "DESTROY");
         getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-        if(gameManager!=null)
-            gameManager.onDestroy();
         super.onDestroy();
     }
 }

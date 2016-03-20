@@ -1,6 +1,10 @@
 package com.cedric.androidpong;
 
+import android.app.AlertDialog;
+import android.content.Context;
+import android.content.DialogInterface;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 
 /**
@@ -8,7 +12,11 @@ import android.util.Log;
  */
 public abstract class GameManager {
 
+    protected static final int SCORE_TO_WIN = 3;
+
+    protected AppCompatActivity activity;
     protected GameSurfaceView surfaceViewManaged;
+    protected Context surfaceContext;
 
     protected int scoreOther;
     protected int scoreThis;
@@ -29,6 +37,10 @@ public abstract class GameManager {
         {
             this.scoreOther += 1;
             notifyOtherBallLost();
+            if(scoreOther == SCORE_TO_WIN)
+            {
+                onLose();
+            }
         }
     }
 
@@ -39,6 +51,10 @@ public abstract class GameManager {
     protected void onOtherLostBall()
     {
         this.scoreThis += 1;
+        if(scoreThis == SCORE_TO_WIN)
+        {
+            onWin();
+        }
     }
 
     protected void onBallArrived(float ballXRelativePosition, float xVectorDirection, float yVectorDirection)
@@ -47,4 +63,42 @@ public abstract class GameManager {
         Ball ball = new Ball(surfaceViewManaged.getResources(), ballXRelativePosition, 0, xVectorDirection, yVectorDirection);
         surfaceViewManaged.addObjectOnScene(ball);
     }
+
+    public void onLose()
+    {
+        stopManagerOnceAndForAll();
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(surfaceContext);
+        builder.setMessage("You WIN !");
+        builder.setPositiveButton("Back to menu", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                activity.finish();
+            }
+        });
+        builder.show();
+    }
+
+    public void onWin()
+    {
+        stopManagerOnceAndForAll();
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(surfaceContext);
+        builder.setMessage("You LOSE =(");
+        builder.setPositiveButton("Back to menu", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                activity.finish();
+            }
+        });
+        builder.show();
+    }
+
+    public abstract void onResume();
+
+    public abstract void onPause();
+
+    public abstract void onStop();
+
+    public abstract void stopManagerOnceAndForAll();
 }

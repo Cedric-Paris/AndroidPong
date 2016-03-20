@@ -2,4 +2,8 @@
     <string name="app_name">AndroidPong</string>
     <string name="no_bluetooth">Bluetooth non supporté sur cet appareil</string>
     <string name="bluetooth_unable">Bluetooth non activé</string>
+    <string name="appName">Blue\' Pong</string>
+    <string name="textCreateButton">Create a Game</string>
+    <string name="textJoinButton">Join a Game</string>
+    <string name="textQuitButton">Quit</string>
 </resources>
