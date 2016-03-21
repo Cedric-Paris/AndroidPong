@@ -99,7 +99,7 @@ public abstract class GameManager {
             }
         };
         Timer timer = new Timer();
-        timer.scheduleAtFixedRate(spawnBallTask, 0, TIME_BEFORE_BALL_SPAWN);
+        timer.scheduleAtFixedRate(spawnBallTask, TIME_BEFORE_BALL_SPAWN / 2, TIME_BEFORE_BALL_SPAWN);
     }
 
     protected void stopBallSpawnTask()
