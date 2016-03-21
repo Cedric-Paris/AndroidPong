@@ -7,7 +7,7 @@ import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
 
-import com.cedric.androidpong.Bluetooth.BluetoothGameManager;
+import com.cedric.androidpong.bluetooth.BluetoothGameManager;
 
 public class MenuActivity extends AppCompatActivity {
 

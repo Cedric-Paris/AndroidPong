@@ -1,6 +1,5 @@
-package com.cedric.androidpong.Bluetooth;
+package com.cedric.androidpong.bluetooth;
 
-import android.app.AlertDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothServerSocket;
@@ -10,7 +9,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Handler;
-import android.os.ParcelUuid;
 import android.util.Log;
 
 import java.io.IOException;
@@ -154,7 +152,7 @@ public class BluetoothGamePongService {
 
         public AcceptThread()
         {
-            Log.e(LOG_TAG, "Start Accept Thread");
+            Log.i(LOG_TAG, "Start Accept Thread");
             BluetoothServerSocket tmp = null;
             // Create a new listening server socket
             try {
@@ -163,7 +161,6 @@ public class BluetoothGamePongService {
                 Log.e(LOG_TAG, "Start listen failed" + e.getMessage());
             }
             listenSocket = tmp;
-            //GERER LE CAS NULL
         }
 
         public void run() {
@@ -174,8 +171,7 @@ public class BluetoothGamePongService {
             {
                 try
                 {
-                    socket = listenSocket.accept();//Retourne que si connection ou exception
-                    Log.i(LOG_TAG, "Socket Accepter");
+                    socket = listenSocket.accept();
                 }
                 catch (IOException e)
                 {
@@ -184,7 +180,6 @@ public class BluetoothGamePongService {
                 }
                 if (socket != null)
                 {
-                    Log.i(LOG_TAG, "socket not null");
                     connected(socket, socket.getRemoteDevice());
                     break;
                 }
@@ -199,7 +194,6 @@ public class BluetoothGamePongService {
 
             try
             {
-                Log.i("BluetoothGamePongServic" , "Close listen socket");
                 listenSocket.close();
             }
             catch (IOException e)
@@ -217,7 +211,8 @@ public class BluetoothGamePongService {
         private final BluetoothSocket bluetoothSocket;
 
         public ConnectThread(BluetoothDevice device)
-        {Log.e(LOG_TAG, "Start Connect Thread");
+        {
+            Log.i(LOG_TAG, "Start Connect Thread");
             BluetoothSocket tmp = null;
             try
             {
@@ -236,7 +231,7 @@ public class BluetoothGamePongService {
             bluetoothAdapter.cancelDiscovery();
             try
             {
-                bluetoothSocket.connect();//Retourne que si connection ou exception
+                bluetoothSocket.connect();
             }
             catch (IOException e)
             {
@@ -272,7 +267,8 @@ public class BluetoothGamePongService {
         private volatile boolean isCanceled;
 
         public ConnectedThread(BluetoothSocket socket)
-        {Log.e(LOG_TAG, "Start Connected Thread");
+        {
+            Log.i(LOG_TAG, "Start Connected Thread");
             bluetoothSocket = socket;
             InputStream tmpIn = null;
             OutputStream tmpOut = null;
@@ -293,13 +289,12 @@ public class BluetoothGamePongService {
         {
             byte[] buffer = new byte[500];
             int bytes;
-            // Keep listening to the InputStream while connected
+
             while (!isCanceled)
             {
                 try
                 {
                     bytes = blueInputStream.read(buffer, 0, buffer.length);
-                    Log.i("BluetoothGamePongServic", "READ STRING"+ new String(buffer, 0, bytes));
                     handler.obtainMessage(BluetoothGameManager.MESSAGE_READ, bytes, -1, buffer).sendToTarget();
                 }
                 catch (IOException e)
@@ -315,7 +310,6 @@ public class BluetoothGamePongService {
 
         public void write(byte[] message)
         {
-            Log.i("BluetoothGamePongServic","Write message"+new String(message));
             try
             {
                 blueOutputStream.write(message);
@@ -331,7 +325,6 @@ public class BluetoothGamePongService {
 
         public void cancel()
         {
-            Log.i("BluetoothGamePongServic", "Cancel connected thread");
             isCanceled = true;
             try
             {

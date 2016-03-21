@@ -5,8 +5,8 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 
+import com.cedric.androidpong.R;
 import com.cedric.androidpong.gameobject.Ball;
 
 import java.util.Random;
@@ -80,7 +80,6 @@ public abstract class GameManager {
     protected void onBallArrived(float ballXRelativePosition, float xVectorDirection, float yVectorDirection)
     {
         this.nbBallOnThisScene += 1;
-        Log.i("BluetoothGamePongServic","ball"+ballXRelativePosition+", "+xVectorDirection+", "+yVectorDirection);
         Ball ball = new Ball(surfaceViewManaged.getResources(), ballXRelativePosition, 0, xVectorDirection, yVectorDirection);
         surfaceViewManaged.addObjectOnScene(ball);
     }
@@ -117,8 +116,8 @@ public abstract class GameManager {
         stopManagerOnceAndForAll();
 
         AlertDialog.Builder builder = new AlertDialog.Builder(surfaceContext);
-        builder.setMessage("You LOSE =(");
-        builder.setPositiveButton("Back to menu", new DialogInterface.OnClickListener() {
+        builder.setMessage(R.string.textMessageLose);
+        builder.setPositiveButton(R.string.textButtonBackMenu, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 activity.finish();
@@ -134,8 +133,8 @@ public abstract class GameManager {
 
         AlertDialog.Builder builder = new AlertDialog.Builder(surfaceContext);
 
-        builder.setMessage("You WIN !");
-        builder.setPositiveButton("Back to menu", new DialogInterface.OnClickListener() {
+        builder.setMessage(R.string.textMessageWin);
+        builder.setPositiveButton(R.string.textButtonBackMenu, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 activity.finish();

@@ -103,7 +103,6 @@ public class Ball extends GameObject
             rebondSurHorizontale();
             return;
         }
-        ////A TRAITER Cas d'arrivee sur les cotes avec rebond different
     }
 
 }

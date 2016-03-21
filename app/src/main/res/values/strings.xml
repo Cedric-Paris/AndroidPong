@@ -1,9 +1,21 @@
 <resources>
-    <string name="app_name">AndroidPong</string>
-    <string name="no_bluetooth">Bluetooth non supporté sur cet appareil</string>
-    <string name="bluetooth_unable">Bluetooth non activé</string>
-    <string name="appName">Blue\' Pong</string>
+    <string name="app_name">Blue\' Pong</string>
+    <string name="no_bluetooth">Bluetooth not supported on this device</string>
+    <string name="bluetooth_unable">Bluetooth not activated</string>
     <string name="textCreateButton">Create a Game</string>
     <string name="textJoinButton">Join a Game</string>
     <string name="textQuitButton">Quit</string>
+    <string name="textMessageLose">You LOSE =(</string>
+    <string name="textMessageWin">You WIN !</string>
+    <string name="textButtonBackMenu">Back to menu</string>
+    <string name="textMessageNoDeviceFound">No device Found</string>
+    <string name="textMessageConnectionFailed">Connection failed :(</string>
+    <string name="textButtonRetry">Retry</string>
+    <string name="textButtonQuit">Quit</string>
+    <string name="textMessageConnecting">Connecting . . .</string>
+    <string name="textMessageConnectionLost">Connection lost :(\nReconnecting . . .</string>
+    <string name="textMessageSelectDevice">Select a device</string>
+    <string name="textMessageWaitConnection">Waiting for connection . . .</string>
+    <string name="textMessageSearch">Search...</string>
+    <string name="textMessageCancelExit">Cancel and Exit</string>
 </resources>

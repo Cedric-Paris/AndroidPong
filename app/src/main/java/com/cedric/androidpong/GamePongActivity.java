@@ -4,11 +4,10 @@ import android.bluetooth.BluetoothAdapter;
 import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.WindowManager;
 import android.widget.Toast;
 
-import com.cedric.androidpong.Bluetooth.BluetoothGameManager;
+import com.cedric.androidpong.bluetooth.BluetoothGameManager;
 import com.cedric.androidpong.game.GameManager;
 import com.cedric.androidpong.game.GameSurfaceView;
 
@@ -48,7 +47,6 @@ public class GamePongActivity extends AppCompatActivity {
         {
             gameManager = new BluetoothGameManager(this, gameSurfaceView, savedInstanceState);
         }
-        //gameSurfaceView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_FULLSCREEN);//Supprime la barre de l'heure en haut
         setContentView(gameSurfaceView);
         initializeBluetooth();
     }
@@ -83,7 +81,6 @@ public class GamePongActivity extends AppCompatActivity {
     public void onStart()
     {
         super.onStart();
-        Log.i("BluetoothGame", "Start GameManager");
         if (!bluetoothAdapter.isEnabled())
         {
             startActivityForResult(new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE), REQUEST_ENABLE_BT);
@@ -95,14 +92,15 @@ public class GamePongActivity extends AppCompatActivity {
     }
 
     @Override
-    protected void onResume() {
+    protected void onResume()
+    {
         gameManager.onResume();
         super.onResume();
     }
 
     @Override
-    protected void onPause(){
-        Log.i("STARTQUITUE DE LA MORT", "APP : PAUSE");
+    protected void onPause()
+    {
         gameManager.onPause();
         super.onPause();
     }
@@ -116,14 +114,15 @@ public class GamePongActivity extends AppCompatActivity {
     }
 
     @Override
-    public void onSaveInstanceState(Bundle savedInstanceState) {
+    public void onSaveInstanceState(Bundle savedInstanceState)
+    {
         gameManager.saveInstanceState(savedInstanceState);
         super.onSaveInstanceState(savedInstanceState);
     }
 
     @Override
-    protected void onDestroy() {
-        Log.i("STARTQUITUE DE LA MORT", "DESTROY");
+    protected void onDestroy()
+    {
         getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         super.onDestroy();
     }

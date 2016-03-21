@@ -1,4 +1,4 @@
-package com.cedric.androidpong.Bluetooth;
+package com.cedric.androidpong.bluetooth;
 
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
@@ -14,6 +14,7 @@ import android.os.Message;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 
+import com.cedric.androidpong.R;
 import com.cedric.androidpong.game.GameManager;
 import com.cedric.androidpong.game.GameSurfaceView;
 
@@ -62,7 +63,7 @@ public class BluetoothGameManager extends GameManager
         simpleMessageBox.setCancelable(false);
         waitingMessageBox = new ProgressDialog(surfaceContext);
         waitingMessageBox.setCancelable(false);
-        waitingMessageBox.setButton(DialogInterface.BUTTON_NEGATIVE, "Annuler et Quitter", new DialogInterface.OnClickListener() {
+        waitingMessageBox.setButton(DialogInterface.BUTTON_NEGATIVE, appCompatActivity.getString(R.string.textMessageCancelExit), new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 onStop();
@@ -90,13 +91,13 @@ public class BluetoothGameManager extends GameManager
         if(bluetoothRole == CLIENT)
         {
             bluetoothService.getDevices(broadcastReceiver);
-            waitingMessageBox.setMessage("Search...");
+            waitingMessageBox.setMessage(activity.getString(R.string.textMessageSearch));
             waitingMessageBox.show();
         }
         else
         {
             bluetoothService.waitConnection(true);
-            waitingMessageBox.setMessage("Waiting for connection . . .");
+            waitingMessageBox.setMessage(activity.getString(R.string.textMessageWaitConnection));
             waitingMessageBox.show();
         }
     }
@@ -153,7 +154,7 @@ public class BluetoothGameManager extends GameManager
             selectDeviceMessageBox.cancel();
         }
         AlertDialog.Builder builder = new AlertDialog.Builder(this.surfaceContext);
-        builder.setTitle("Select a device");
+        builder.setTitle(R.string.textMessageSelectDevice);
         builder.setItems((String[]) deviceAvailables.toArray(new String[1]), new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
@@ -189,11 +190,9 @@ public class BluetoothGameManager extends GameManager
         stopBallSpawnTask();
         if(isPausedOnConnection)
         {
-            Log.i("EEEEEEE", "IspausedOnConnection");
             return;
         }
-    Log.i("EEEEEEE", "pass Pause");
-        waitingMessageBox.setMessage("Connection lost :(\nReconnecting . . .");
+        waitingMessageBox.setMessage(activity.getString(R.string.textMessageConnectionLost));
         waitingMessageBox.show();
         if(bluetoothRole == CLIENT){
             isReconnecting = true;
@@ -207,7 +206,6 @@ public class BluetoothGameManager extends GameManager
 
     private void reconnectClient()
     {
-        Log.i("TTTTTTTTTT", "ReconnectClient");
         if(deviceAddress == null)
         {
             deviceAddress = bluetoothService.getDeviceConnected().getAddress();
@@ -217,7 +215,7 @@ public class BluetoothGameManager extends GameManager
 
     private void onConnecting()
     {
-        waitingMessageBox.setMessage("Connecting . . .");
+        waitingMessageBox.setMessage(activity.getString(R.string.textMessageConnecting));
     }
 
     private void onConnectionFailed()
@@ -227,7 +225,7 @@ public class BluetoothGameManager extends GameManager
             waitingMessageBox.cancel();
             simpleMessageBox.cancel();
             AlertDialog.Builder builder = new AlertDialog.Builder(surfaceContext);
-            builder.setNegativeButton("Quitter", new DialogInterface.OnClickListener() {
+            builder.setNegativeButton(R.string.textButtonQuit, new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
                             onStop();
@@ -235,17 +233,16 @@ public class BluetoothGameManager extends GameManager
                         }
                     }
             );
-            builder.setPositiveButton("Retry", new DialogInterface.OnClickListener() {
+            builder.setPositiveButton(R.string.textButtonRetry, new DialogInterface.OnClickListener() {
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
                     simpleMessageBox.cancel();
                     simpleMessageBox = new AlertDialog.Builder(surfaceContext).create();
                     simpleMessageBox.setCancelable(false);
-                    Log.i("EEEEEEE","Clic Retry");
                     onConnectionLost();
                 }
             });
-            builder.setMessage("Connection failed :(");
+            builder.setMessage(R.string.textMessageConnectionFailed);
             simpleMessageBox = builder.show();
         }
 
@@ -259,14 +256,14 @@ public class BluetoothGameManager extends GameManager
             return;
         }
         simpleMessageBox.cancel();
-        simpleMessageBox.setButton(DialogInterface.BUTTON_POSITIVE, "Return to menu", new DialogInterface.OnClickListener() {
+        simpleMessageBox.setButton(DialogInterface.BUTTON_POSITIVE, activity.getString(R.string.textButtonBackMenu), new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 onStop();
                 activity.finish();
             }
         });
-        simpleMessageBox.setMessage("No device Found");
+        simpleMessageBox.setMessage(activity.getString(R.string.textMessageNoDeviceFound));
         simpleMessageBox.show();
 
     }
@@ -297,7 +294,6 @@ public class BluetoothGameManager extends GameManager
                     break;
                 case MESSAGE_READ:
                     byte[] buffer = (byte[])msg.obj;
-                    Log.i("BluetoothGame", "ARG 1 = "+msg.arg1);
                     try {
                         onMessageRead(new String(buffer, 0, msg.arg1));
                     }
@@ -332,11 +328,9 @@ public class BluetoothGameManager extends GameManager
         {
             case CODE_CONNECTION_QUERY:
                 isCommunicationOkOther = true;
-                Log.i("SSSSSSSSSSSSSSSS","Other Ok");
                 bluetoothService.write(CODE_CONNECTION_OK + this.argsSeparator + "NONE");
                 break;
             case CODE_CONNECTION_OK:
-                Log.i("SSSSSSSSSSSSSSSS", "This OK");
                 isCommunicationOkThis = true;
                 break;
             case CODE_GAME_LAUNCHED:
@@ -347,8 +341,6 @@ public class BluetoothGameManager extends GameManager
                 onOtherLostBall();
                 break;
             case CODE_BALL_ARRIVED:
-                Log.i("BluetoothGame", message);
-                Log.i("BluetoothGame", msgCode+" "+tabMessages.length);
                 onBallArrived(Float.parseFloat(tabMessages[2]), Float.parseFloat(tabMessages[3]), Float.parseFloat(tabMessages[4]));
                 break;
         }
@@ -358,7 +350,6 @@ public class BluetoothGameManager extends GameManager
             bluetoothService.write(CODE_GAME_LAUNCHED + this.argsSeparator + "NONE");
             startGame();
         }
-        Log.i("TESTESTESTEST0", message);
     }
 
     private TimerTask communicationQuery;

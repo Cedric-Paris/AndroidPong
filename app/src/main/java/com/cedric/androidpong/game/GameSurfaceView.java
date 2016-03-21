@@ -10,13 +10,12 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.WindowManager;
 
-import com.cedric.androidpong.Bluetooth.BluetoothGameManager;
+import com.cedric.androidpong.bluetooth.BluetoothGameManager;
 import com.cedric.androidpong.gameobject.Paddle;
 import com.cedric.androidpong.gameobject.Ball;
 import com.cedric.androidpong.gameobject.GameObject;
@@ -105,13 +104,11 @@ public class GameSurfaceView extends SurfaceView implements SensorEventListener,
 
     public void pause()
     {
-        Log.i("STARTQUITUE DE LA MORT", "Surface : PAUSE first");
         if(senSensorManager != null)
         {
             senSensorManager.unregisterListener(this, senAccelerometer);
             senSensorManager = null;
         }
-        Log.i("STARTQUITUE DE LA MORT", "Surface : PAUSE");
     }
 
     public void drawSurface()
@@ -167,8 +164,8 @@ public class GameSurfaceView extends SurfaceView implements SensorEventListener,
     }
 
     @Override
-    public void surfaceCreated(SurfaceHolder holder) {
-        Log.i("STARTQUITUE DE LA MORT", "Surface CREATED");
+    public void surfaceCreated(SurfaceHolder holder)
+    {
         paddle.initializePosition(this.getHeight());
         paintTextStyle.setTextSize((this.getWidth() * 0.2f));
     }
@@ -226,13 +223,11 @@ public class GameSurfaceView extends SurfaceView implements SensorEventListener,
     @Override
     public void onGameObjectNeedToBeDestroyed(GameObject gameObject)
     {
-        Log.i("BluetoothGame", "OBJECT DESTROYED");
         synchronized (needToBeRemoved)
         {
             needToBeRemoved.add(gameObject);
             if(gameObject.getClass().getName() == Ball.class.getName())
             {
-                Log.i("BluetoothGame", "OBJECT DESTROYED IS BALL");
                 gameManager.onBallDestroyed((Ball)gameObject);
             }
         }
