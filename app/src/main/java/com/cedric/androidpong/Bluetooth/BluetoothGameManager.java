@@ -13,11 +13,9 @@ import android.os.Handler;
 import android.os.Message;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
-import android.widget.Toast;
 
-import com.cedric.androidpong.Ball;
-import com.cedric.androidpong.GameManager;
-import com.cedric.androidpong.GameSurfaceView;
+import com.cedric.androidpong.game.GameManager;
+import com.cedric.androidpong.game.GameSurfaceView;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -170,6 +168,7 @@ public class BluetoothGameManager extends GameManager
         simpleMessageBox.cancel();
         waitingMessageBox.cancel();
         surfaceViewManaged.resume();
+        startBallSpawnTask();
     }
 
     private void onConnectionEstablished()
@@ -187,6 +186,7 @@ public class BluetoothGameManager extends GameManager
     private void onConnectionLost()
     {
         surfaceViewManaged.pause();
+        stopBallSpawnTask();
         if(isPausedOnConnection)
         {
             Log.i("EEEEEEE", "IspausedOnConnection");
@@ -258,6 +258,14 @@ public class BluetoothGameManager extends GameManager
         {
             return;
         }
+        simpleMessageBox.cancel();
+        simpleMessageBox.setButton(DialogInterface.BUTTON_POSITIVE, "Return to menu", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                onStop();
+                activity.finish();
+            }
+        });
         simpleMessageBox.setMessage("No device Found");
         simpleMessageBox.show();
 
@@ -386,6 +394,7 @@ public class BluetoothGameManager extends GameManager
     public void onPause()
     {
         surfaceViewManaged.pause();
+        stopBallSpawnTask();
         if(bluetoothService != null && bluetoothService.getState() == BluetoothGamePongService.STATE_CONNECTED)
         {
             isPausedOnConnection = true;

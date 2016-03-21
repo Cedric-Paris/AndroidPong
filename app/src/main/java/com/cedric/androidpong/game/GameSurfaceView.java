@@ -1,12 +1,10 @@
-package com.cedric.androidpong;
+package com.cedric.androidpong.game;
 
 import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Canvas;
 import android.graphics.Color;
-import android.graphics.Matrix;
 import android.graphics.Paint;
-import android.graphics.Rect;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -17,12 +15,16 @@ import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.WindowManager;
-import android.widget.Toast;
 
 import com.cedric.androidpong.Bluetooth.BluetoothGameManager;
+import com.cedric.androidpong.gameobject.Paddle;
+import com.cedric.androidpong.gameobject.Ball;
+import com.cedric.androidpong.gameobject.GameObject;
+import com.cedric.androidpong.gameobject.GameObjectEventsObserver;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 /**
  * Created by Cedric on 07/03/2016.
@@ -32,8 +34,8 @@ public class GameSurfaceView extends SurfaceView implements SensorEventListener,
     private SurfaceHolder holder;
 
     private Paint paintTextStyle;
-    private static final int colorThis = Color.argb(150, 0, 162, 232);
-    private static final int colorOther = Color.argb(150, 255, 127, 39);
+    private static final int COLOR_THIS = Color.argb(150, 0, 162, 232);
+    private static final int COLOR_OTHER = Color.argb(150, 255, 127, 39);
 
     private Paddle paddle;
     private List<GameObject> objectsOnScene;
@@ -67,15 +69,11 @@ public class GameSurfaceView extends SurfaceView implements SensorEventListener,
             return;
         }
         paddle = new Paddle(resources);
-        Ball b = new Ball(resources);
-        b.addListener(this);
-        objectsOnScene.add(b);
-        b=new Ball(resources, 0.1f,0,1,-1);
-        b.addListener(this);
-        objectsOnScene.add(b);
-        b=new Ball(resources, 0,0.1f,-1,1);
-        b.addListener(this);
-        objectsOnScene.add(b);
+        Random rand = new Random();
+        rand.nextFloat();
+        Ball ball = new Ball(resources, rand.nextFloat(),0,rand.nextFloat(),1.0f);
+        ball.addListener(this);
+        objectsOnScene.add(ball);
     }
 
     public void registerGameManager(BluetoothGameManager manager)
@@ -125,10 +123,10 @@ public class GameSurfaceView extends SurfaceView implements SensorEventListener,
         canvas.drawARGB(255, 30, 30, 30);
         paddle.drawOnScene(canvas);
         paintTextStyle.setTextAlign(Paint.Align.RIGHT);
-        paintTextStyle.setColor(colorThis);
+        paintTextStyle.setColor(COLOR_THIS);
         canvas.drawText(gameManager.getScoreThis() + " ", this.getWidth() / 2, (this.getHeight() * 0.07f) + paintTextStyle.getTextSize(), paintTextStyle);
         paintTextStyle.setTextAlign(Paint.Align.LEFT);
-        paintTextStyle.setColor(colorOther);
+        paintTextStyle.setColor(COLOR_OTHER);
         canvas.drawText(" "+gameManager.getScoreOther(),this.getWidth()/2, (this.getHeight()*0.07f)+paintTextStyle.getTextSize(), paintTextStyle);
         for(GameObject g : objectsOnScene)
             g.drawOnScene(canvas);

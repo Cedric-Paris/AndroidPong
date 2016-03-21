@@ -1,13 +1,13 @@
-package com.cedric.androidpong;
+package com.cedric.androidpong.gameobject;
 
 import android.content.res.Resources;
-import android.hardware.SensorEvent;
-import android.util.Log;
+
+import com.cedric.androidpong.R;
 
 /**
  * Created by Cedric on 07/03/2016.
  */
-public class Paddle extends GameObject{
+public class Paddle extends GameObject {
 
     private transient float xSpeed = 0;
 

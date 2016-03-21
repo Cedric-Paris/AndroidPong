@@ -1,4 +1,4 @@
-package com.cedric.androidpong;
+package com.cedric.androidpong.gameobject;
 
 import android.content.res.Resources;
 import android.graphics.Bitmap;

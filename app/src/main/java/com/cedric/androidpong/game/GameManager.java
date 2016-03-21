@@ -1,4 +1,4 @@
-package com.cedric.androidpong;
+package com.cedric.androidpong.game;
 
 import android.app.AlertDialog;
 import android.content.Context;
@@ -7,12 +7,19 @@ import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 
+import com.cedric.androidpong.gameobject.Ball;
+
+import java.util.Random;
+import java.util.Timer;
+import java.util.TimerTask;
+
 /**
  * Created by Cedric on 19/03/2016.
  */
 public abstract class GameManager {
 
-    protected static final int SCORE_TO_WIN = 3;
+    protected static final int SCORE_TO_WIN = 10;
+    protected static final long TIME_BEFORE_BALL_SPAWN = 7000;
 
     protected AppCompatActivity activity;
     protected GameSurfaceView surfaceViewManaged;
@@ -20,6 +27,12 @@ public abstract class GameManager {
 
     protected int scoreOther;
     protected int scoreThis;
+
+    protected int nbBallOnThisScene = 1;
+    protected Random random = new Random();
+
+    protected TimerTask spawnBallTask;
+    private volatile boolean isTaskRunning;
 
     public int getScoreThis() { return scoreThis; }
 
@@ -29,6 +42,7 @@ public abstract class GameManager {
 
     public void onBallDestroyed(Ball ballDestroyed)
     {
+        this.nbBallOnThisScene -= 1;
         if(ballDestroyed.getPosYTopRelative()<=0)
         {
             sendBallToOther(ballDestroyed.getPosXLeftRelative(), ballDestroyed.getYVectorDirection() * (-1), ballDestroyed.getYVectorDirection() * (-1));
@@ -40,6 +54,12 @@ public abstract class GameManager {
             if(scoreOther == SCORE_TO_WIN)
             {
                 onLose();
+            }
+            if(nbBallOnThisScene <= 0)
+            {
+                Ball ball = new Ball(surfaceViewManaged.getResources(), random.nextFloat(),0, random.nextFloat(), 1.0f);
+                surfaceViewManaged.addObjectOnScene(ball);
+                nbBallOnThisScene = 1;
             }
         }
     }
@@ -59,28 +79,41 @@ public abstract class GameManager {
 
     protected void onBallArrived(float ballXRelativePosition, float xVectorDirection, float yVectorDirection)
     {
+        this.nbBallOnThisScene += 1;
         Log.i("BluetoothGamePongServic","ball"+ballXRelativePosition+", "+xVectorDirection+", "+yVectorDirection);
         Ball ball = new Ball(surfaceViewManaged.getResources(), ballXRelativePosition, 0, xVectorDirection, yVectorDirection);
         surfaceViewManaged.addObjectOnScene(ball);
     }
 
-    public void onLose()
+    protected synchronized void startBallSpawnTask()
     {
-        stopManagerOnceAndForAll();
-
-        AlertDialog.Builder builder = new AlertDialog.Builder(surfaceContext);
-        builder.setMessage("You WIN !");
-        builder.setPositiveButton("Back to menu", new DialogInterface.OnClickListener() {
+        if(isTaskRunning){
+            return;
+        }
+        isTaskRunning = true;
+        spawnBallTask = new TimerTask() {
             @Override
-            public void onClick(DialogInterface dialog, int which) {
-                activity.finish();
+            public void run() {
+                Ball ball = new Ball(surfaceViewManaged.getResources(), random.nextFloat(),0, random.nextFloat(), 1.0f);
+                surfaceViewManaged.addObjectOnScene(ball);
+                nbBallOnThisScene += 1;
             }
-        });
-        builder.show();
+        };
+        Timer timer = new Timer();
+        timer.scheduleAtFixedRate(spawnBallTask, 0, TIME_BEFORE_BALL_SPAWN);
     }
 
-    public void onWin()
+    protected void stopBallSpawnTask()
     {
+        if(spawnBallTask != null) {
+            spawnBallTask.cancel();
+        }
+        isTaskRunning = false;
+    }
+
+    public void onLose()
+    {
+        stopBallSpawnTask();
         stopManagerOnceAndForAll();
 
         AlertDialog.Builder builder = new AlertDialog.Builder(surfaceContext);
@@ -93,6 +126,25 @@ public abstract class GameManager {
         });
         builder.show();
     }
+
+    public void onWin()
+    {
+        stopBallSpawnTask();
+        stopManagerOnceAndForAll();
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(surfaceContext);
+
+        builder.setMessage("You WIN !");
+        builder.setPositiveButton("Back to menu", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                activity.finish();
+            }
+        });
+        builder.show();
+    }
+
+    public abstract void start();
 
     public abstract void onResume();
 

@@ -1,9 +1,9 @@
-package com.cedric.androidpong;
+package com.cedric.androidpong.gameobject;
 
 import android.content.res.Resources;
 import android.graphics.RectF;
-import android.hardware.SensorEvent;
-import android.util.Log;
+
+import com.cedric.androidpong.R;
 
 
 /**
@@ -52,8 +52,16 @@ public class Ball extends GameObject
         realXposition = (posXLeftRelative * widthDrawArea) + (xVectorDirection * widthSreenSpeed);
         realYposition = (posYTopRelative * heightDrawArea) + (yVectorDirection * heightScreenSpeed);
 
-        if(realXposition > widthDrawArea-sprite.getHeight() || realXposition < 0)
+        if(realXposition > widthDrawArea-sprite.getHeight())
+        {
+            realXposition = widthDrawArea-sprite.getHeight();
             rebondSurVerticale();
+        }
+        if(realXposition < 0)
+        {
+            realXposition = 0;
+            rebondSurVerticale();
+        }
         if(this.getCollisionRect().intersect(mainPaddle.getCollisionRect()))
             manageCollisionWithPaddle(mainPaddle);
         if(realYposition >heightDrawArea || realYposition < - sprite.getHeight()){

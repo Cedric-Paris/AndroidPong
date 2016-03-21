@@ -2,9 +2,6 @@ package com.cedric.androidpong;
 
 import android.bluetooth.BluetoothAdapter;
 import android.content.Intent;
-import android.content.pm.PackageManager;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -12,14 +9,14 @@ import android.view.WindowManager;
 import android.widget.Toast;
 
 import com.cedric.androidpong.Bluetooth.BluetoothGameManager;
-
-import java.util.jar.Manifest;
+import com.cedric.androidpong.game.GameManager;
+import com.cedric.androidpong.game.GameSurfaceView;
 
 
 public class GamePongActivity extends AppCompatActivity {
 
     private GameSurfaceView gameSurfaceView;
-    private BluetoothGameManager gameManager;
+    private GameManager gameManager;
 
     private BluetoothAdapter bluetoothAdapter;
     private static final int REQUEST_ENABLE_BT = 1;

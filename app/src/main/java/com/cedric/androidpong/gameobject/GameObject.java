@@ -1,9 +1,8 @@
-package com.cedric.androidpong;
+package com.cedric.androidpong.gameobject;
 
 import android.content.res.Resources;
 import android.graphics.Canvas;
 import android.graphics.RectF;
-import android.hardware.SensorEvent;
 
 import java.io.Serializable;
 import java.util.ArrayList;
