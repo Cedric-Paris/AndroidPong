@@ -17,7 +17,7 @@
         android:layout_above="@+id/createGameButton"
         android:layout_centerHorizontal="true"
         android:gravity="center"
-        android:textColor="#aaff4800"
+        android:textColor="#b400a2e8"
         android:textSize="50dp"/>
 
 
